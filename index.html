@@ -1,0 +1,3276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>火车档案 · Train Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#ffffff;--bg-2:#f5f5f5;--surface:#ffffff;--surface-2:#fafafa;
+    --line:#e0e0e0;--line-2:#eeeeee;
+    --acc:#2a65cc;--acc-2:#4a82d6;--acc-light:#e8f0fc;
+    --ink:#1a1a1a;--ink-mute:#666666;--ink-dim:#999999;
+    --red:#c0492c;--green:#5a7d3a;
+    --edit-mark:#5a7d3a;--edit-mark-line:#9ab86a;
+    --shadow:0 2px 8px rgba(0,0,0,.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Noto Sans SC",sans-serif;background:var(--bg);color:var(--ink);
+    line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a{color:inherit}
+  button{font-family:inherit}
+
+  /* ============ NAV ============ */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 48px;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{display:flex;align-items:center;gap:12px;text-decoration:none;cursor:pointer}
+  .logo-mark{
+    width:38px;height:38px;border-radius:50%;border:2px solid var(--acc);
+    display:grid;place-items:center;
+    background:radial-gradient(circle at 30% 30%,#ffffff,#f5f5f5);
+    box-shadow:inset 0 0 12px rgba(0,0,0,.04),0 0 18px rgba(42,101,204,.12);
+  }
+  .logo-mark svg{width:20px;height:20px}
+  .logo-text{font-family:"Noto Serif SC",serif;font-weight:900;font-size:19px;letter-spacing:2px;color:var(--ink)}
+  .logo-text span{color:var(--acc)}
+  .nav-links{display:flex;gap:34px;list-style:none;align-items:center}
+  .nav-links a{
+    color:var(--ink-mute);text-decoration:none;font-size:14px;font-weight:500;
+    letter-spacing:.5px;position:relative;transition:color .25s;cursor:pointer;
+  }
+  .nav-links a:hover{color:var(--acc-2)}
+  .nav-links a.active{color:var(--ink)}
+  .nav-links a.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--acc);
+  }
+  .nav-links a.nav-hot{color:#e07355;font-weight:600}
+  .nav-links a.nav-hot::before{content:"●";font-size:8px;vertical-align:2px;margin-right:5px;color:#e07355;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+  .nav-search{
+    width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+    background:transparent;color:var(--ink-mute);cursor:pointer;display:grid;place-items:center;
+    transition:.25s;
+  }
+  .nav-search:hover{border-color:var(--acc);color:var(--acc)}
+
+  /* ============ HERO ============ */
+  .hero{
+    min-height:100vh;position:relative;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:120px 48px 80px;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 20%, rgba(42,101,204,.06), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 20% 80%, rgba(42,101,204,.04), transparent 60%);
+    overflow:hidden;
+  }
+  .tracks{
+    position:absolute;left:0;right:0;bottom:0;height:38vh;
+    perspective:600px;perspective-origin:50% 0;pointer-events:none;opacity:.3;
+  }
+  .track{
+    position:absolute;left:50%;bottom:0;width:300%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--acc) 20%,var(--acc) 80%,transparent);
+    transform:translateX(-50%);box-shadow:0 0 8px rgba(42,101,204,.3);
+  }
+  .ties{
+    position:absolute;left:0;right:0;bottom:0;height:100%;
+    background-image:repeating-linear-gradient(90deg,transparent 0 60px,rgba(42,101,204,.15) 60px 64px);
+    transform:rotateX(72deg);transform-origin:bottom;
+    mask-image:linear-gradient(180deg,transparent,#000 70%);
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 70%);
+  }
+  .hero-inner{position:relative;z-index:2;max-width:1200px;margin:0 auto;width:100%}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:3px;
+    color:var(--acc);text-transform:uppercase;margin-bottom:28px;
+  }
+  .eyebrow::before{content:"";width:32px;height:1px;background:var(--acc)}
+  .hero h1{
+    font-family:"Noto Serif SC",serif;font-weight:900;
+    font-size:clamp(64px,11vw,168px);line-height:.92;letter-spacing:-2px;
+    color:var(--ink);margin-bottom:8px;
+  }
+  .hero h1 .accent{color:var(--acc);font-style:italic}
+  .hero-sub-latin{
+    font-family:"Big Shoulders Display",sans-serif;font-weight:700;
+    font-size:clamp(28px,4vw,52px);letter-spacing:8px;color:var(--ink-dim);
+    text-transform:uppercase;margin-bottom:36px;
+  }
+  .hero p.lead{max-width:560px;font-size:17px;color:var(--ink-mute);font-weight:300;margin-bottom:44px}
+  .search-bar{
+    display:flex;align-items:center;gap:0;max-width:620px;
+    background:rgba(245,245,245,.8);border:1px solid var(--line);
+    border-radius:4px;overflow:hidden;transition:border-color .3s,box-shadow .3s;
+  }
+  .search-bar:focus-within{border-color:var(--acc);box-shadow:0 0 0 4px rgba(42,101,204,.1)}
+  .search-bar .icon{padding:0 18px;color:var(--ink-dim)}
+  .search-bar input{
+    flex:1;background:transparent;border:none;outline:none;color:var(--ink);
+    font-family:inherit;font-size:15px;padding:18px 0;
+  }
+  .search-bar input::placeholder{color:var(--ink-dim)}
+  .search-bar button{
+    background:var(--acc);color:#fff;border:none;cursor:pointer;
+    padding:18px 28px;font-family:"Big Shoulders Display",sans-serif;font-weight:700;
+    letter-spacing:2px;font-size:15px;transition:background .25s;
+  }
+  .search-bar button:hover{background:var(--acc-2)}
+  .hero-tags{margin-top:24px;display:flex;gap:10px;flex-wrap:wrap}
+  .hero-tags span{
+    font-size:12px;color:var(--ink-mute);padding:6px 14px;
+    border:1px solid var(--line);border-radius:999px;cursor:pointer;transition:.25s;
+  }
+  .hero-tags span:hover{border-color:var(--acc);color:var(--acc)}
+
+  /* ============ STATS ============ */
+  .stats{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg-2);display:grid;grid-template-columns:repeat(4,1fr)}
+  .stat{padding:42px 36px;text-align:center;border-right:1px solid var(--line);position:relative}
+  .stat:last-child{border-right:none}
+  .stat-num{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:56px;color:var(--acc);line-height:1}
+  .stat-num small{font-size:18px;color:var(--ink-mute);margin-left:4px;font-weight:500}
+  .stat-label{font-size:13px;color:var(--ink-mute);letter-spacing:2px;margin-top:10px;text-transform:uppercase}
+  .stat-cn{font-size:14px;color:var(--ink);margin-top:4px}
+
+  /* ============ SECTION ============ */
+  section.block{padding:100px 48px;max-width:1280px;margin:0 auto}
+  .sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px;flex-wrap:wrap;gap:20px}
+  .sec-title{display:flex;flex-direction:column;gap:6px}
+  .sec-title .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--acc);letter-spacing:3px;text-transform:uppercase}
+  .sec-title h2{font-family:"Noto Serif SC",serif;font-weight:900;font-size:42px;letter-spacing:1px}
+  .sec-more{color:var(--ink-mute);text-decoration:none;font-size:14px;display:flex;align-items:center;gap:8px;transition:color .25s;cursor:pointer}
+  .sec-more:hover{color:var(--acc)}
+
+  .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .qa-card{
+    position:relative;padding:44px;border:1px solid var(--line);
+    background:linear-gradient(135deg,var(--surface) 0%,var(--bg-2) 100%);
+    border-radius:6px;text-decoration:none;color:inherit;overflow:hidden;
+    transition:transform .35s,border-color .35s;cursor:pointer;
+  }
+  .qa-card::before{
+    content:"";position:absolute;top:0;left:0;width:4px;height:100%;
+    background:var(--acc);transform:scaleY(0);transform-origin:top;transition:transform .4s;
+  }
+  .qa-card:hover{transform:translateY(-6px);border-color:var(--acc)}
+  .qa-card:hover::before{transform:scaleY(1)}
+  .qa-card .qa-icon{width:60px;height:60px;border:1px solid var(--acc);border-radius:6px;display:grid;place-items:center;color:var(--acc);margin-bottom:28px;background:rgba(42,101,204,.06)}
+  .qa-card .qa-tag{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--acc);letter-spacing:2px;margin-bottom:10px}
+  .qa-card h3{font-family:"Noto Serif SC",serif;font-weight:700;font-size:30px;margin-bottom:12px}
+  .qa-card p{color:var(--ink-mute);font-size:15px;max-width:420px;margin-bottom:24px}
+  .qa-card .qa-count{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink-dim)}
+  .qa-card .qa-count b{color:var(--acc-2);font-size:18px}
+  .qa-arrow{position:absolute;right:36px;bottom:36px;color:var(--ink-dim);transition:.35s}
+  .qa-card:hover .qa-arrow{color:var(--acc);transform:translate(4px,-4px)}
+
+  .arc-grid{display:flex;flex-direction:column;gap:0}
+  .arc-card{
+    padding:12px 0;border-bottom:1px solid var(--line-2);cursor:pointer;
+    position:relative;transition:color .15s;
+  }
+  .arc-card:last-child{border-bottom:none}
+  .arc-card:hover{color:var(--acc)}
+  .arc-card .stamp{
+    font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:1px;
+    color:var(--ink-dim);display:inline-block;margin-right:8px;
+  }
+  .arc-card .type{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:10px;padding:1px 6px;border:1px solid var(--line);border-radius:2px;margin-bottom:6px;letter-spacing:1px}
+  .type-line{background:rgba(42,101,204,.08);color:var(--acc);border-color:rgba(42,101,204,.25)}
+  .type-train{background:rgba(192,73,44,.12);color:#e07355;border-color:rgba(192,73,44,.3)}
+  .arc-card h4{font-weight:700;font-size:17px;margin-bottom:2px}
+  .arc-card .sub{font-size:12px;color:var(--ink-dim);margin-bottom:6px}
+  .arc-meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--ink-mute)}
+  .arc-meta .row{display:inline-flex;gap:4px}
+  .arc-meta .row .k{color:var(--ink-dim)}
+  .arc-meta .row .v{color:var(--ink);font-family:"JetBrains Mono",monospace;font-size:11px}
+  .arc-card .date{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-dim);margin-top:4px}
+
+  /* CTA */
+  .cta{
+    margin:40px 48px 0;max-width:1280px;margin-left:auto;margin-right:auto;
+    border:1px solid var(--line);border-radius:8px;overflow:hidden;
+    background:radial-gradient(ellipse at 80% 20%,rgba(42,101,204,.06),transparent 60%),var(--bg-2);
+    padding:64px 56px;display:flex;justify-content:space-between;align-items:center;gap:40px;flex-wrap:wrap;position:relative;
+  }
+  .cta::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(45deg,transparent 0 18px,rgba(42,101,204,.03) 18px 19px)}
+  .cta-text{position:relative;z-index:1}
+  .cta-text .kicker{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--acc);letter-spacing:3px;margin-bottom:14px;text-transform:uppercase}
+  .cta-text h3{font-family:"Noto Serif SC",serif;font-weight:900;font-size:36px;margin-bottom:12px;line-height:1.2}
+  .cta-text p{color:var(--ink-mute);max-width:480px}
+  .btn-brass{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--acc);color:#fff;border:none;cursor:pointer;
+    padding:8px 16px;font-family:inherit;font-weight:600;
+    font-size:13px;border-radius:2px;transition:background .15s;
+    text-decoration:none;
+  }
+  .btn-brass:hover{background:var(--acc-2)}
+  .btn-ghost{
+    display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--ink);
+    border:1px solid var(--line);cursor:pointer;padding:8px 16px;font-family:inherit;font-size:13px;border-radius:2px;text-decoration:none;transition:border-color .15s;
+  }
+  .btn-ghost:hover{border-color:var(--acc);color:var(--acc)}
+  .btn-danger{
+    display:inline-flex;align-items:center;gap:6px;background:transparent;color:#e07355;
+    border:1px solid rgba(192,73,44,.4);cursor:pointer;padding:8px 14px;font-size:12px;
+    border-radius:2px;transition:.15s;font-family:inherit;
+  }
+  .btn-danger:hover{background:rgba(192,73,44,.1);border-color:#e07355}
+
+  /* FOOTER */
+  footer{margin-top:100px;border-top:1px solid var(--line);background:var(--bg-2);padding:60px 48px 30px}
+  .foot-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px}
+  .foot-brand .logo{margin-bottom:18px}
+  .foot-brand p{color:var(--ink-mute);font-size:14px;max-width:320px}
+  .foot-col h5{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--acc);letter-spacing:2px;margin-bottom:18px;text-transform:uppercase}
+  .foot-col a{display:block;color:var(--ink-mute);text-decoration:none;font-size:14px;margin-bottom:10px;transition:color .25s;cursor:pointer}
+  .foot-col a:hover{color:var(--acc)}
+  .foot-bottom{max-width:1280px;margin:48px auto 0;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;color:var(--ink-dim);font-size:12px;font-family:"JetBrains Mono",monospace;letter-spacing:1px}
+
+  /* ============ PAGE COMMON ============ */
+  .page{padding:100px 48px 30px;max-width:1280px;margin:0 auto;min-height:80vh}
+
+  /* ============ HOMEPAGE: flat compact ============ */
+  .hm{padding:100px 48px 20px;max-width:1280px;margin:0 auto}
+  .hm-title{font-family:"Noto Serif SC",serif;font-weight:900;font-size:28px;line-height:1;margin-bottom:4px}
+  .hm-sub{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);letter-spacing:1px;margin-bottom:18px}
+  .hm-search{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding:8px 0;margin-bottom:28px}
+  .hm-search svg{color:var(--ink-dim);flex-shrink:0}
+  .hm-search input{flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:14px;padding:4px 0}
+  .hm-search input::placeholder{color:var(--ink-dim)}
+
+  .hm-section{margin-bottom:28px}
+  .hm-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  .hm-head h2{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px}
+  .hm-head h2 .hm-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:2px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .hm-head h2 small{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);font-weight:400}
+  .hm-more{color:var(--ink-mute);text-decoration:none;font-size:12px;font-family:'JetBrains Mono',monospace}
+
+  .hm-stations{display:flex;flex-wrap:wrap;gap:4px}
+  .hm-station{
+    display:inline-flex;align-items:center;gap:2px;
+    padding:2px 8px;border:1px solid var(--line);border-radius:2px;
+    text-decoration:none;color:var(--ink);font-size:12px;font-weight:500;
+    transition:border-color .15s;background:var(--surface);
+  }
+  .hm-station:hover{border-color:var(--acc)}
+  .hm-station .s-n{font-size:10px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace}
+
+  .hm-list{display:flex;flex-direction:column}
+  .hm-row{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 0;border-bottom:1px solid var(--line-2);cursor:pointer;
+    font-size:13px;transition:color .15s;text-decoration:none;color:inherit;
+  }
+  .hm-row:last-child{border-bottom:none}
+  .hm-row:hover{color:var(--acc)}
+  .hm-row .r-code{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;width:60px;flex-shrink:0}
+  .hm-row .r-fromto{color:var(--ink-mute);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hm-row .r-type{font-size:10px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;width:48px;flex-shrink:0;text-align:right}
+  .hm-row .r-status{font-size:10px;font-family:'JetBrains Mono',monospace;width:36px;flex-shrink:0;text-align:right}
+  .hm-row .r-lines{font-size:10px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace;width:120px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .hm-cta{margin-top:20px;padding:12px 0;border-top:1px solid var(--line);display:flex;gap:12px;font-size:13px;color:var(--ink-mute)}
+  .link-brass{color:var(--acc);text-decoration:none;font-weight:500;cursor:pointer}
+  .link-brass:hover{color:var(--acc-2)}
+  .breadcrumb{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);margin-bottom:16px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .breadcrumb a{color:var(--ink-mute);text-decoration:none;cursor:pointer}
+  .breadcrumb a:hover{color:var(--acc)}
+  .breadcrumb span.sep{color:var(--ink-dim)}
+  .page-title{font-family:"Noto Serif SC",serif;font-weight:900;font-size:32px;margin-bottom:4px}
+  .page-sub{font-size:13px;color:var(--ink-dim);margin-bottom:24px;font-family:"JetBrains Mono",monospace;letter-spacing:1px}
+
+  /* toolbar: search + filter */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+  .toolbar .search-mini{
+    flex:1;min-width:200px;display:flex;align-items:center;gap:8px;
+    border-bottom:1px solid var(--line);padding:6px 0;
+  }
+  .toolbar .search-mini:focus-within{border-color:var(--acc)}
+  .toolbar .search-mini input{flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:13px;padding:4px 0}
+  .toolbar .search-mini input::placeholder{color:var(--ink-dim)}
+  .toolbar .search-mini .icon{color:var(--ink-dim)}
+  .filter-chip{
+    font-size:12px;color:var(--ink-mute);padding:4px 12px;border:1px solid var(--line);
+    border-radius:3px;cursor:pointer;transition:.15s;background:transparent;
+  }
+  .filter-chip:hover{border-color:var(--acc);color:var(--acc)}
+  .filter-chip.active{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:500}
+  .filter-select{
+    background:transparent;border:1px solid var(--line);color:var(--ink);
+    padding:5px 10px;border-radius:2px;font-family:inherit;font-size:12px;cursor:pointer;outline:none;
+  }
+  .filter-select:focus{border-color:var(--acc)}
+
+  /* list grid */
+  .list-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .list-grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .empty-state{
+    grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--ink-dim);
+  }
+  .empty-state svg{margin-bottom:12px;opacity:.4}
+  .empty-state h4{font-size:18px;color:var(--ink-mute);margin-bottom:6px}
+
+  /* ============ DETAIL PAGE (flat) ============ */
+  .detail-hero{padding:0 0 20px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+  .detail-stamp{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;color:var(--ink-dim);display:inline-block;margin-right:12px}
+  .detail-type{display:inline-block;font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;padding:2px 8px;border:1px solid var(--line);border-radius:2px;margin-bottom:12px}
+  .detail-name{font-family:"Noto Serif SC",serif;font-weight:900;font-size:36px;letter-spacing:0;margin-bottom:4px;line-height:1.15}
+  .detail-latin{font-family:"Big Shoulders Display",sans-serif;font-size:16px;letter-spacing:3px;color:var(--ink-dim);text-transform:uppercase;margin-bottom:10px}
+
+  .detail-life{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px;font-size:13px;color:var(--ink-mute)}
+  .detail-life em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:11px;padding:2px 7px;border-radius:2px;letter-spacing:1px}
+  .detail-life .life-item{font-size:12px;color:var(--ink-mute)}
+  .detail-life .life-item b{font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-dim);margin-right:4px;letter-spacing:1px}
+
+  .sec-count{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);font-weight:400}
+  .line-chain{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .line-node{
+    display:flex;flex-direction:column;gap:1px;padding:6px 10px;
+    cursor:pointer;transition:color .15s;text-decoration:none;color:inherit;
+  }
+  .line-node:hover{color:var(--acc)}
+  .ln-idx{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--acc);letter-spacing:1px}
+  .ln-name{font-family:"Noto Serif SC",serif;font-weight:700;font-size:13px}
+  .ln-meta{font-size:10px;color:var(--ink-dim)}
+  .ln-arrow{color:var(--ink-dim);font-size:14px;font-weight:300}
+
+  .c-lines{display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-width:0}
+  .c-mute{color:var(--ink-dim);font-size:12px}
+  .line-chip{
+    font-size:11px;padding:2px 8px;background:rgba(42,101,204,.1);color:var(--acc);
+    border:1px solid rgba(42,101,204,.25);border-radius:3px;cursor:pointer;transition:.2s;white-space:nowrap;
+  }
+  .line-chip:hover{background:rgba(42,101,204,.2)}
+  .chip-arrow{color:var(--ink-dim);font-size:11px;margin:0 1px}
+
+  .line-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+  .line-pick{
+    display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:6px;transition:.2s;
+  }
+  .line-pick:hover{border-color:var(--acc)}
+  .line-pick.checked{background:rgba(42,101,204,.1);border-color:var(--acc)}
+  .line-pick input{accent-color:var(--acc);width:16px;height:16px;cursor:pointer}
+  .line-pick .lp-name{font-size:13px;color:var(--ink);font-weight:500}
+  .line-pick .lp-meta{font-size:11px;color:var(--ink-dim);margin-left:auto;white-space:nowrap}
+  .detail-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+
+  .detail-body{display:grid;grid-template-columns:2fr 1fr;gap:24px}
+
+  .station-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px}
+  .station-tag{
+    display:inline-flex;align-items:center;gap:2px;
+    padding:2px 8px;border:1px solid var(--line);border-radius:2px;
+    text-decoration:none;color:var(--ink);font-size:12px;font-weight:500;
+    transition:border-color .15s;background:var(--surface);
+  }
+  .station-tag:hover{border-color:var(--acc);color:var(--acc)}
+  .station-tag .s-count{font-size:10px;color:var(--ink-dim);font-family:'JetBrains Mono',monospace}
+  .station-section{margin-bottom:24px}
+  .station-section:last-child{margin-bottom:0}
+  .station-section h4{font-weight:700;font-size:15px;margin-bottom:10px}
+
+  .station-hero{padding:0 0 16px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+  .station-hero .s-code{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);letter-spacing:1px}
+  .station-hero h1{font-family:"Noto Serif SC",serif;font-weight:900;font-size:32px}
+
+  .detail-section{margin-bottom:20px}
+  .detail-section h3{font-weight:700;font-size:16px;margin-bottom:12px}
+  .param-table{display:grid;grid-template-columns:140px 1fr;gap:0}
+  .param-table .pk{padding:8px 0;border-bottom:1px solid var(--line-2);color:var(--ink-dim);font-size:13px;font-family:"JetBrains Mono",monospace}
+  .param-table .pv{padding:8px 0;border-bottom:1px solid var(--line-2);color:var(--ink);font-size:13px;font-weight:500}
+  .param-table .pk:last-child,.param-table .pv:last-child{border-bottom:none}
+  .desc-text{color:var(--ink-mute);font-size:14px;line-height:1.7}
+
+  .row-table{display:flex;flex-direction:column}
+  .row-thead{
+    display:none;
+  }
+  .row-tr{
+    display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;
+    padding:6px 0;border-bottom:1px solid var(--line-2);cursor:pointer;transition:color .15s;
+  }
+  .row-tr:last-child{border-bottom:none}
+  .row-tr:hover{color:var(--acc)}
+  .row-tr > span{display:inline;min-width:0}
+  .row-tr .c-no{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);width:48px;flex-shrink:0}
+  .row-tr .c-name b{font-family:"Noto Serif SC",serif;font-weight:700;font-size:14px}
+  .row-tr .c-name small{font-size:10px;color:var(--ink-dim);margin-left:4px}
+  .row-tr .c-fromto{color:var(--ink-mute);font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row-tr .c-num{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-mute)}
+  .row-tr .c-tag{font-size:11px}
+  .row-tr em{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:10px;padding:2px 6px;border-radius:2px;letter-spacing:1px;display:inline-block}
+  em.t-yes{background:rgba(107,142,78,.15);color:#9bbf78;border:1px solid rgba(107,142,78,.3)}
+  em.t-no{background:rgba(154,144,129,.1);color:var(--ink-mute);border:1px solid var(--line)}
+  em.t-train{background:rgba(192,73,44,.12);color:#e07355;border:1px solid rgba(192,73,44,.3)}
+
+  /* 字段级就地编辑：下划线常驻 */
+  .pv-editable{
+    display:inline-block;cursor:text;padding:2px 2px;margin:0 1px;
+    border-bottom:2px dashed #9ab86a;
+    transition:border-color .2s,color .2s;border-radius:0;
+  }
+  .pv-editable:hover{border-bottom-color:var(--edit-mark);color:var(--edit-mark)}
+  .pv-editable::after{
+    content:"✎";color:var(--edit-mark);margin-left:6px;font-size:11px;
+    vertical-align:middle;opacity:.45;transition:opacity .2s;
+  }
+  .pv-editable:hover::after{opacity:1}
+  .pv-editing{
+    display:inline-block;
+    background:var(--surface);border:1px solid var(--edit-mark);
+    padding:4px 8px;border-radius:3px;outline:none;color:var(--ink);
+    font-family:inherit;font-size:14px;font-weight:500;min-width:120px;
+  }
+  .pv-editing:focus{box-shadow:0 0 0 2px rgba(90,125,58,.2)}
+  .pv-edit-hint{
+    font-size:11px;color:var(--ink-dim);font-family:"JetBrains Mono",monospace;
+    margin-bottom:12px;border-bottom:1px dashed var(--line-2);padding-bottom:8px;
+  }
+  .timeline{display:flex;flex-direction:column;gap:0;padding-left:0;margin-top:10px}
+  .tl-item{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line-2)}
+  .tl-item:last-child{border-bottom:none}
+  .tl-date{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--acc);letter-spacing:1px;white-space:nowrap;width:80px;flex-shrink:0}
+  .tl-text{font-size:13px;color:var(--ink)}
+
+  /* 车次版本演变时间线（区块3 形态） */
+  .ver-tl{border-left:2px solid var(--line);margin-left:2px;padding-left:16px}
+  .ver-tli{position:relative;padding:6px 0 14px}
+  .ver-tli::before{content:"";position:absolute;left:-21px;top:10px;width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 3px var(--surface);box-sizing:border-box}
+  .ver-tli.old::before{background:var(--ink-dim);box-shadow:none}
+  .ver-tli .vd{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--acc);margin-bottom:2px;display:flex;align-items:center;gap:8px}
+  .ver-tli.old .vd{color:var(--ink-dim)}
+  .ver-tli .vt{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .ver-tli .vr{font-size:12px;color:var(--ink-mute);margin-top:2px}
+  .ver-tli .vrel{display:inline-block;font-size:10px;padding:1px 6px;border:1px solid rgba(42,101,204,.3);border-radius:2px;color:var(--acc);font-family:"JetBrains Mono",monospace}
+  .ver-tli .mark{font-size:10px;padding:1px 6px;border-radius:2px;font-family:"JetBrains Mono",monospace;font-weight:400}
+  .m-go{background:var(--green);color:#fff}
+  .m-stop{background:var(--red);color:#fff}
+  .ver-add{
+    display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+    font-size:12px;color:var(--acc);border:1px dashed rgba(42,101,204,.4);border-radius:2px;
+    padding:6px 12px;cursor:pointer;background:transparent;font-family:inherit;
+  }
+  .ver-add:hover{background:rgba(42,101,204,.06)}
+
+  /* 模拟热评 */
+  .hot-comment-list{margin-bottom:24px;border:1px solid var(--line-2);border-radius:4px;padding:14px 16px 6px;background:rgba(42,101,204,.025)}
+  .hot-comment-list .hc-tag{
+    display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:600;
+    color:#fff;background:var(--acc);padding:2px 7px;border-radius:2px;margin-bottom:10px;
+    font-family:"JetBrains Mono",monospace;letter-spacing:1px;
+  }
+  .hot-comment{
+    padding:10px 0 12px;border-top:1px dashed var(--line-2);
+  }
+  .hot-comment:first-of-type{border-top:none;padding-top:0}
+  .hot-comment .hc-text{font-size:13px;color:var(--ink);line-height:1.7}
+  .hot-comment .hc-meta{margin-top:6px;font-size:11px;color:var(--ink-dim);display:flex;gap:12px;flex-wrap:wrap}
+  .hot-comment .hc-meta b{color:var(--acc);font-family:"JetBrains Mono",monospace;font-weight:600}
+  .hot-comment .hc-author{font-weight:600;color:var(--ink-mute);margin-right:2px}
+  .sidebar-card{border-bottom:1px solid var(--line);padding:0 0 16px;margin-bottom:16px;background:transparent}
+  .sidebar-card h4{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);letter-spacing:1px;margin-bottom:10px}
+  .sidebar-card .meta-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px dashed var(--line-2)}
+  .sidebar-card .meta-row:last-child{border-bottom:none}
+  .sidebar-card .meta-row .k{color:var(--ink-dim)}
+  .sidebar-card .meta-row .v{color:var(--ink);font-family:"JetBrains Mono",monospace;font-size:11px}
+
+  /* ============ FORM ============ */
+  .form-wrap{max-width:880px;margin:0 auto}
+
+  /* 模板切换条 */
+  .tpl-switcher{
+    display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+    margin-bottom:16px;padding:10px 0;border-bottom:1px solid var(--line);
+  }
+  .tpl-label{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);margin-right:4px}
+  .tpl-chip{
+    background:transparent;border:1px solid var(--line);color:var(--ink-mute);
+    padding:3px 10px;border-radius:2px;font-size:12px;cursor:pointer;transition:.15s;font-family:inherit;
+  }
+  .tpl-chip:hover{border-color:var(--acc);color:var(--acc)}
+  .tpl-chip.active{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:500}
+  .tpl-chip.tpl-blank{margin-left:auto;border-style:dashed;color:var(--ink-dim)}
+  .form-card{padding:0;border:none;background:transparent}
+  .form-row{margin-bottom:16px}
+  .form-row label{display:block;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-dim);margin-bottom:6px}
+  .form-row label .req{color:#e07355;margin-left:4px}
+  .form-row input,.form-row select,.form-row textarea{
+    width:100%;background:var(--bg-2);border:1px solid var(--line);color:var(--ink);
+    padding:10px 14px;border-radius:2px;font-family:inherit;font-size:13px;outline:none;transition:.15s;
+  }
+  .form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--acc)}
+  .form-row textarea{resize:vertical;min-height:100px;line-height:1.6}
+  .form-row select{cursor:pointer}
+  .form-row .hint{font-size:11px;color:var(--ink-dim);margin-top:4px}
+  .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
+  .form-switch{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--line)}
+  .form-switch button{
+    flex:1;background:transparent;color:var(--ink-mute);border:none;cursor:pointer;
+    padding:12px;font-family:inherit;font-weight:600;font-size:13px;transition:.15s;border-bottom:2px solid transparent;
+  }
+  .form-switch button.active{color:var(--acc);border-bottom-color:var(--acc)}
+
+  /* toast */
+  .toast{
+    position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);
+    background:var(--surface-2);border:1px solid var(--acc);color:var(--ink);
+    padding:14px 24px;border-radius:6px;font-size:14px;z-index:1000;
+    box-shadow:var(--shadow);transition:transform .35s;opacity:0;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  /* modal */
+  .modal-mask{
+    position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+    display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+  }
+  .modal-mask.show{display:flex}
+  .modal{
+    background:var(--surface);border:1px solid var(--line);border-radius:8px;
+    padding:36px;max-width:440px;width:90%;
+  }
+  .modal h3{font-family:"Noto Serif SC",serif;font-size:22px;margin-bottom:12px}
+  .modal p{color:var(--ink-mute);font-size:14px;margin-bottom:24px}
+  .modal-actions{display:flex;gap:12px;justify-content:flex-end}
+
+  /* animations */
+  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .hero .eyebrow{animation:rise .8s .1s both}
+  .hero h1{animation:rise .9s .2s both}
+  .hero-sub-latin{animation:rise .9s .35s both}
+  .hero p.lead{animation:rise .9s .5s both}
+  .search-bar{animation:rise .9s .65s both}
+  .hero-tags{animation:rise .9s .8s both}
+  .page,.arc-card,.list-grid > *{animation:fadeIn .4s both}
+
+  /* responsive */
+  @media(max-width:900px){
+    nav{padding:14px 18px}
+    .nav-links{display:none}
+    .logo-text{font-size:16px;letter-spacing:1px}
+    .logo-mark{width:32px;height:32px}
+
+    .hm{padding:80px 14px 20px}
+    .hm-title{font-size:24px}
+    .hm-search{margin-bottom:18px}
+    .hm-section{margin-bottom:20px}
+    .hm-row .r-lines{display:none}
+    .hm-row .r-type{display:none}
+
+    .line-chip{font-size:10px;padding:2px 6px}
+
+    .hm-cta{font-size:13px}
+
+    .detail-life{gap:8px;font-size:12px}
+    .detail-life .life-item{font-size:12px}
+    .line-chain{flex-direction:column;align-items:stretch;gap:2px}
+    .line-node{padding:4px 8px}
+    .ln-arrow{transform:rotate(90deg);text-align:center;font-size:12px}
+    .line-picker{grid-template-columns:1fr}
+    .toolbar{flex-wrap:wrap}
+    .filter-select{flex:1 1 120px;min-width:120px}
+
+    .hero{padding:110px 24px 60px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .stat:nth-child(2){border-right:none}
+    .stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid var(--line)}
+    section.block{padding:70px 24px}
+    .qa-grid{grid-template-columns:1fr}
+    .arc-grid{flex-direction:column}
+    .list-grid,.list-grid.cols-2{grid-template-columns:1fr}
+    .sec-title h2{font-size:32px}
+    .cta{padding:40px 28px}
+    .foot-inner{grid-template-columns:1fr 1fr;gap:30px}
+    .page{padding:80px 14px 30px}
+    .page-title{font-size:28px}
+    .page-sub{font-size:14px;margin-bottom:20px}
+    .detail-hero{padding:0 0 14px}
+    .detail-name{font-size:26px}
+    .detail-body{grid-template-columns:1fr;gap:16px}
+    .detail-section{margin-bottom:14px}
+    .detail-section h3{font-size:15px;margin-bottom:10px}
+    .param-table{grid-template-columns:1fr !important;gap:0}
+    .param-table .pk{padding:6px 0 2px;border-bottom:none;font-size:12px}
+    .param-table .pv{padding:2px 0 8px;border-bottom:1px solid var(--line-2);font-size:13px}
+    .station-hero{padding:0 0 12px}
+    .station-hero h1{font-size:24px}
+    .station-section{margin-bottom:14px}
+    .station-section h4{font-size:14px;margin-bottom:8px}
+    .station-tags{gap:3px;margin-bottom:10px}
+    .station-tag{padding:1px 6px;font-size:11px}
+    .sidebar-card{padding-bottom:8px;margin-bottom:8px}
+    .sidebar-card .meta-row{font-size:11px;padding:4px 0}
+    .breadcrumb{margin-bottom:12px;font-size:11px}
+    .form-grid-2{grid-template-columns:1fr}
+    .form-card{padding:28px 22px}
+  }
+
+  /* ============ 待开通专题 & 跨境标注 ============ */
+  .scope-badge{display:inline-flex;align-items:center;gap:4px;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:2px;border:1px solid var(--line);margin-top:8px}
+  .scope-xb{background:rgba(224,115,85,.12);color:#e07355;border-color:rgba(224,115,85,.35)}
+  .scope-int{background:rgba(97,126,193,.12);color:#7d90c4;border-color:rgba(97,126,193,.35)}
+  .scope-dm{background:rgba(107,142,78,.12);color:#9bbf78;border-color:rgba(107,142,78,.3)}
+  .up-kpi{border:1px solid var(--line);background:var(--bg-2);padding:16px 20px;border-radius:4px;min-width:130px;display:flex;flex-direction:column;gap:6px}
+  .up-kpi .uk-n{font-family:"Big Shoulders Display",sans-serif;font-weight:900;font-size:34px;color:var(--acc);line-height:1}
+  .up-kpi.up-kpi-wide{min-width:280px;border-left:3px solid rgba(224,115,85,.6)}
+  .up-kpi .uk-line{font-size:13px;font-weight:600;color:var(--ink);font-family:"JetBrains Mono",monospace}
+  .up-kpi > span{font-size:12px;color:var(--ink-dim)}
+  .up-corr{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--ink-dim);padding:10px 14px;border:1px dashed color-mix(in srgb,var(--ink-mute) 30%,transparent);border-radius:4px;margin-bottom:6px}
+  .up-corr em{font-style:normal;font-weight:600;color:var(--acc-2)}
+  .up-corr small{margin-right:6px;color:var(--ink-mute)}
+  .up-group{margin-bottom:26px}
+  .up-group-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .up-group-head small{color:var(--ink-dim);font-family:"JetBrains Mono",monospace;font-size:11px}
+  .up-badge{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;padding:4px 10px;border-radius:2px;border:1px solid var(--line);color:var(--ink-mute)}
+  .up-badge.b-soon{background:rgba(224,115,85,.14);color:#e07355;border-color:rgba(224,115,85,.4)}
+  .up-badge.b-in12{background:rgba(224,115,85,.08);color:#c98a72;border-color:rgba(224,115,85,.3)}
+  .up-badge.b-mid{background:rgba(42,101,204,.08);color:var(--acc);border-color:rgba(42,101,204,.25)}
+  .up-badge.b-far{color:var(--ink-mute);border-color:var(--line)}
+  .up-list{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .up-row{display:grid;grid-template-columns:1.2fr .9fr 1.6fr .7fr;gap:12px;align-items:baseline;padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px}
+  .up-row:last-child{border-bottom:none}
+  .up-row:hover{background:rgba(42,101,204,.03)}
+  .up-name b{font-family:"Noto Serif SC",serif;font-weight:700;color:var(--ink)}
+  .up-name .up-scale{display:inline-block;margin-left:8px;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-dim);border:1px solid var(--line);padding:1px 5px;border-radius:2px}
+  .up-city{color:var(--ink-mute);font-size:13px}
+  .up-line{color:var(--ink);font-size:13px}
+  .up-line small{display:block;color:var(--ink-dim);font-size:11px;font-family:"JetBrains Mono",monospace}
+  .up-open{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--acc);white-space:nowrap}
+  .up-note{grid-column:1/-1;color:var(--ink-dim);font-size:12px;margin-top:-4px}
+  @media(max-width:720px){
+    .up-row{grid-template-columns:1fr 1fr;row-gap:6px}
+    .up-line{grid-column:1/-1}
+    .up-note{grid-column:1/-1}
+    .up-open{justify-self:end}
+  }
+  /* —— 待开通线路专题 —— */
+  .up-line-card{display:flex;flex-direction:column;gap:12px;padding:16px 18px;border:1px solid var(--line);border-radius:6px;margin-bottom:12px;background:var(--bg)}
+  .up-line-card:hover{border-color:color-mix(in srgb,var(--acc) 40%,var(--line))}
+  .ul-top{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline}
+  .ul-name{font-family:"Noto Serif SC",serif;font-weight:700;font-size:17px;color:var(--ink)}
+  .ul-sub{color:var(--ink-mute);font-size:12.5px;font-family:"JetBrains Mono",monospace}
+  .ul-meta{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0}
+  .ul-tag{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.5px;padding:3px 8px;border-radius:2px;border:1px solid var(--line);color:var(--ink-mute)}
+  .ul-tag.ta-speed{color:var(--acc);border-color:rgba(42,101,204,.35)}
+  .ul-tag.ta-len{color:var(--ink)}
+  .ul-tag.ta-status-0{color:#e07355;border-color:rgba(224,115,85,.5);background:rgba(224,115,85,.08)}
+  .ul-tag.ta-status-1{color:var(--acc);border-color:rgba(42,101,204,.35);background:rgba(42,101,204,.06)}
+  .ul-tag.ta-status-2{color:var(--ink-mute);border-color:var(--line)}
+  .ul-sta-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:2px}
+  .ul-sta{display:inline-flex;gap:5px;align-items:center;font-size:12px;color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:3px 11px;cursor:pointer}
+  .ul-sta:hover{border-color:var(--acc);color:var(--acc)}
+  .ul-sta small{font-family:"JetBrains Mono",monospace;color:var(--ink-dim);font-size:10px}
+  .ul-where{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-mute)}
+  .ul-card-note{color:var(--ink-dim);font-size:12.5px;line-height:1.6}
+  .ul-m2m{font-size:11px;color:var(--ink-dim);font-style:italic;font-family:"JetBrains Mono",monospace}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" data-route="/">
+    <span class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2a65cc" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+    </span>
+    <span class="logo-text">火车<span>档案</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a data-route="/">首页</a></li>
+    <li><a data-route="/lines">线路档案</a></li>
+    <li><a data-route="/trains">列车档案</a></li>
+    <li><a data-route="/stations">车站</a></li>
+    <li><a data-route="/upcoming" class="nav-hot">待开通·车站</a></li>
+    <li><a data-route="/upcoming-lines" class="nav-hot">待开通·线路</a></li>
+    <li><a data-route="/contribute">投稿</a></li>
+  </ul>
+  <button class="nav-search" id="navSearchBtn" aria-label="搜索">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+  </button>
+</nav>
+
+<!-- APP MOUNT -->
+<div id="app"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <h3 id="modalTitle">确认删除</h3>
+    <p id="modalText">该操作不可撤销，确定要删除这条档案吗？</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="modalCancel">取消</button>
+      <button class="btn-danger" id="modalConfirm">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-inner">
+    <div class="foot-brand">
+      <a class="logo" data-route="/">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2a65cc" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+        </span>
+        <span class="logo-text">火车<span>档案</span></span>
+      </a>
+      <p>由铁路爱好者共建的中国铁路档案数据库，记录线路与列车的过去、现在与未来。</p>
+    </div>
+    <div class="foot-col">
+      <h5>档案</h5>
+      <a data-route="/lines">铁路线路</a>
+      <a data-route="/trains">运营列车</a>
+      <a data-route="/stations">车站</a>
+      <a data-route="/upcoming">待开通车站</a>
+      <a data-route="/upcoming-lines">待开通线路</a>
+    </div>
+    <div class="foot-col">
+      <h5>参与</h5>
+      <a data-route="/contribute">投稿中心</a>
+      <a data-route="/contribute">编辑指南</a>
+    </div>
+    <div class="foot-col">
+      <h5>关于</h5>
+      <a data-route="/">项目介绍</a>
+      <a data-route="/">使用条款</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 TRAIN ARCHIVE · 铁路爱好者共建</span>
+    <span id="versionTag">v1.0.0 / BUILD 20260817</span>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   火车档案 · 单文件 SPA
+   数据层 + 路由 + 视图渲染
+   ============================================================ */
+
+/* ---------- 数据层 ---------- */
+const STORE_KEY = 'train_archive_v7';
+
+const SEED_LINES = [
+  {
+    id:'L001', no:'001', name:'青藏铁路', latin:'Qinghai-Tibet Railway',
+    from:'西宁', to:'拉萨', length:1956, opened:'2006-07-01',
+    electrified:'是', double:'否(格拉段单线)', grade:'国铁Ⅰ级',
+    stations:'西宁·格尔木·那曲·拉萨', voltage:'25kV', maxSpeed:'100',
+    desc:'世界海拔最高的高原铁路，穿越多年冻土区与高海拔缺氧地带，是连接西藏与内地的交通大动脉。格拉段海拔最高点唐古拉山口达5072米。',
+    timeline:[
+      {date:'1958',text:'西宁至格尔木段开工建设'},
+      {date:'1979',text:'西格段铺通'},
+      {date:'1984',text:'西格段投入运营'},
+      {date:'2001',text:'格尔木至拉萨段开工'},
+      {date:'2006-07-01',text:'青藏铁路全线通车'},
+      {date:'2026-08-14',text:'档案收录'}
+    ],
+    createdAt:'2026-08-14'
+  },
+  {
+    id:'L002', no:'002', name:'京沪铁路', latin:'Beijing-Shanghai Railway',
+    from:'北京', to:'上海', length:1463, opened:'1968-09',
+    electrified:'是', double:'是', grade:'国铁Ⅰ级',
+    stations:'北京·廊坊·天津·静海·沧州·泊头·德州·济南·泰安·兖州·邹城·滕州·枣庄西·徐州·宿州·蚌埠·明光·滁州北·南京·镇江·丹阳·常州·无锡·苏州·昆山·上海', voltage:'25kV', maxSpeed:'160',
+    desc:'由原京山（北京—天津）、津浦（天津—浦口）、沪宁（上海—南京）三线贯通而成。1968年9月南京长江大桥铁路桥通车后全线成型，2006年7月完成电气化，现为京沪通道普速客运与货运主力。',
+    timeline:[
+      {date:'1908',text:'津浦铁路开工'},
+      {date:'1912-11',text:'津浦铁路通车（天津—浦口）'},
+      {date:'1968-09',text:'南京长江大桥建成，京沪铁路全线贯通'},
+      {date:'2006-07',text:'全线电气化改造完成'},
+      {date:'2026-08-10',text:'档案收录'}
+    ],
+    createdAt:'2026-08-10'
+  },
+  {
+    id:'L003', no:'003', name:'京广铁路', latin:'Beijing-Guangzhou Railway',
+    from:'北京', to:'广州', length:2298, opened:'1957-10',
+    electrified:'是', double:'是', grade:'国铁Ⅰ级',
+    stations:'北京·石家庄·郑州·武汉·长沙·广州', voltage:'25kV', maxSpeed:'160',
+    desc:'中国最长的南北铁路干线，连接华北、华中与华南，1957年武汉长江大桥建成后全线贯通。',
+    timeline:[
+      {date:'1897',text:'卢汉铁路开工'},
+      {date:'1957-10',text:'武汉长江大桥建成，全线贯通'},
+      {date:'2001',text:'电气化完成'},
+      {date:'2026-08-05',text:'档案收录'}
+    ],
+    createdAt:'2026-08-05'
+  },
+  {
+    id:'L004', no:'004', name:'陇海铁路', latin:'Lanzhou-Lianyungang Railway',
+    from:'连云港', to:'兰州', length:1759, opened:'1952-08',
+    electrified:'是', double:'是', grade:'国铁Ⅰ级',
+    stations:'连云港·徐州·郑州·西安·宝鸡·兰州', voltage:'25kV', maxSpeed:'160',
+    desc:'中国东西向主干线之一，东起江苏连云港西至甘肃兰州，与兰新线共同构成新亚欧大陆桥中国段。',
+    timeline:[
+      {date:'1904',text:'汴洛铁路开工'},
+      {date:'1952-08',text:'全线贯通'},
+      {date:'2003',text:'电气化完成'},
+      {date:'2026-07-28',text:'档案收录'}
+    ],
+    createdAt:'2026-07-28'
+  },
+  {
+    id:'L005', no:'005', name:'兰新铁路', latin:'Lanzhou-Xinjiang Railway',
+    from:'兰州', to:'阿拉山口', length:2360, opened:'1962-12',
+    electrified:'是', double:'部分复线', grade:'国铁Ⅰ级',
+    stations:'兰州·武威·嘉峪关·哈密·乌鲁木齐·阿拉山口', voltage:'25kV', maxSpeed:'160',
+    desc:'中国西北地区的主干线，西延段与哈萨克斯坦铁路接轨，是亚欧大陆桥的重要组成部分。',
+    timeline:[
+      {date:'1952',text:'兰州至乌鲁木齐段开工'},
+      {date:'1962-12',text:'兰乌段通车'},
+      {date:'1990',text:'西延至阿拉山口'},
+      {date:'2026-07-22',text:'档案收录'}
+    ],
+    createdAt:'2026-07-22'
+  },
+  {
+    id:'L006', no:'006', name:'成昆铁路', latin:'Chengdu-Kunming Railway',
+    from:'成都', to:'昆明', length:1100, opened:'1970-07',
+    electrified:'是', double:'部分复线', grade:'国铁Ⅰ级',
+    stations:'成都·西昌·攀枝花·昆明', voltage:'25kV', maxSpeed:'120',
+    desc:'穿越川西山地与滇北纵谷，被誉为二十世纪人类三大奇迹之一，沿线桥隧密集，工程难度世界罕见。',
+    timeline:[
+      {date:'1958',text:'开工'},
+      {date:'1970-07',text:'通车'},
+      {date:'2000',text:'电气化改造完成'},
+      {date:'2026-07-15',text:'档案收录'}
+    ],
+    createdAt:'2026-07-15'
+  },
+  {
+    id:'L007', no:'007', name:'京沪高铁', latin:'Beijing-Shanghai HSR',
+    from:'北京南', to:'上海虹桥', length:1318, opened:'2011-06-30',
+    electrified:'是', double:'是', grade:'高速铁路',
+    stations:'北京南·廊坊·天津南·沧州西·德州东·济南西·泰安·曲阜东·滕州东·枣庄·徐州东·宿州东·蚌埠南·定远·滁州·南京南·镇江南·丹阳北·常州北·无锡东·苏州北·昆山南·上海虹桥', voltage:'25kV 50Hz', maxSpeed:'350',
+    desc:'中国一次建设里程最长、标准最高的高速铁路，2011年6月30日开通（开通即按300km/h运营）。2017年9月21日"复兴号"率先实现时速350公里商业运营，京沪全程最快压缩至4小时28分，是世界上商业运营速度最高的高铁线路。',
+    timeline:[
+      {date:'2008-04-18',text:'全线开工建设'},
+      {date:'2011-06-30',text:'开通运营，G1次首发列车驶出北京南，按时速300km/h运营'},
+      {date:'2017-09-21',text:'7对复兴号率先提速至350km/h，京沪全程最快4小时28分'},
+      {date:'2018-04-10',text:'复兴号由7对增至15对'},
+      {date:'2020-12-23',text:'推行灵活折扣、有升有降的市场化票价机制'},
+      {date:'2021-06-25',text:'350km/h复兴号由36列增至最高66列，实行整点开行'},
+      {date:'2024-06-15',text:'复兴号智能动车组技术提升版上线，新增优选一等座'},
+      {date:'2026-08-15',text:'档案收录'}
+    ],
+    createdAt:'2026-08-15'
+  }
+];
+
+const SEED_TRAINS = [
+  {
+    id:'T001', no:'02460', code:'G1', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'06:30', arrive:'11:24',
+    duration:'4h 54min', trainType:'CR400BF-B 复兴号智能动车组',
+    formation:'17辆编组', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'2024年Q2调图',
+    desc:'京沪高铁"第一号"车次与线路标杆。2011年6月30日京沪高铁开通当日首发，2017年9月21日率先提速至350km/h。现行图定时刻为北京南06:30始发、上海虹桥11:24终到，全程1318公里，中途仅停沧州西、德州东、曲阜东、南京南、苏州北五站。',
+    stops:[
+      {station:'北京南',time:'06:30 始发'},{station:'沧州西',time:'07:18/07:20'},{station:'德州东',time:'07:45/07:47'},
+      {station:'曲阜东',time:'08:34/08:36'},{station:'南京南',time:'10:13/10:15'},{station:'苏州北',time:'10:59/11:01'},{station:'上海虹桥',time:'11:24 终到'}
+    ],
+    versions:[
+      {validFrom:'2011-06-30', validUntil:'2017-09-20', change:'京沪高铁开通首发列车，使用CRH380BL型动车组，按时速300km/h运营', adjustVersion:'2011年Q2·京沪高铁开通', note:'2011年6月30日G1次作为首发列车驶出北京南站，开通初期全程约5小时。'},
+      {validFrom:'2017-09-21', validUntil:'2021-06-24', change:'换型CR400AF"复兴号"并提速至350km/h，北京南9:00→上海虹桥13:28，全程压缩至4小时28分', adjustVersion:'2017年Q3调图·350提速', note:'全国7对复兴号在京沪高铁率先实现350km/h商业运营，提速不提价，二等座553元、一等座933元、商务座1748元。'},
+      {validFrom:'2021-06-25', validUntil:'2024-06-14', change:'京沪高铁350km/h复兴号由36列扩容至最高66列，实行整点开行，复兴号智能动车组扩大至京沪高铁开行', adjustVersion:'2021年Q3调图', note:'京沪方向采取大站快车模式，一般只停2-3站。'},
+      {validFrom:'2024-06-15', validUntil:null, change:'复兴号智能动车组技术提升版上线京沪高铁，G1次现行使用CR400BF-B型17辆编组，北京南06:30→上海虹桥11:24', adjustVersion:'2024年Q2调图', note:'票价实行市场化浮动，二等座667元起、商务座2331元；17辆编组定员1347人。'}
+    ],
+    createdAt:'2026-08-12'
+  },
+  {
+    id:'T002', no:'02459', code:'K3', model:'快速',
+    from:'北京', to:'莫斯科', depart:'07:27', arrive:'第6日 13:58',
+    duration:'5d 6h', trainType:'国际联运 18/19型客车',
+    formation:'编组可变(硬卧/高包/餐车)', maxSpeed:'120', operator:'中国铁路北京局',
+    validFrom:'1959-06-04', validUntil:null, adjustVersion:'2020 年中俄联运停运',
+    desc:'中国"第一号列车"，北京经乌兰巴托至莫斯科的国际联运列车，全程7826公里，纵贯中、蒙、俄三国，沿西伯利亚大铁路运行，每周一班（北京每周三发车）。2020年起因故长期停运。',
+    stops:[{station:'北京',time:'07:27'},{station:'二连浩特/扎门乌德',time:'次日'},{station:'乌兰巴托',time:'第2日'},{station:'伊尔库茨克',time:'第4日'},{station:'莫斯科雅罗斯拉夫尔',time:'第6日 13:58'}],
+    versions:[
+      {validFrom:'1959-06-04', validUntil:'2019-12-31', change:'1959年6月4日开行，北京每周三07:27发车，中俄蒙三国联运', adjustVersion:'1959 年开行', note:'历史上唯一乘务由中国担当的中俄蒙国际列车，全程7826公里。'},
+      {validFrom:'2020-02', validUntil:null, change:'受疫情及车辆老化影响长期停运，恢复时间未定', adjustVersion:'2020 年中俄联运停运', note:'原18/19型老客车已因俄铁提速要求停止使用。'}
+    ],
+    createdAt:'2026-08-08'
+  },
+  {
+    id:'T003', no:'02458', code:'Z9', model:'直达特快',
+    from:'北京', to:'杭州', depart:'18:53', arrive:'次日 08:23',
+    duration:'13h 30min', trainType:'BSP 25T 客车',
+    formation:'18辆编组(硬卧/软卧)', maxSpeed:'160', operator:'中国铁路北京局',
+    validFrom:'2004-04-18', validUntil:'2019-01-05', adjustVersion:'2004 第五次大提速',
+    desc:'"京沪十三猪"成员列车，北京至杭州的直达特快，夕发朝至，全程仅停少数大站。2019年1月5日起停运，由D717/718次动力集中动车组（CR200J）替代。',
+    stops:[{station:'北京',time:'18:53'},{station:'南京',time:'次日 03:20'},{station:'杭州',time:'次日 08:23'}],
+    versions:[
+      {validFrom:'2004-04-18', validUntil:'2018-12-31', change:'2004年4月18日第五次大提速开行，"京沪十三猪"之一，北京18:53→杭州次日8:23', adjustVersion:'2004 第五次大提速', note:'早期扩至宁波，2013年缩短回杭州。'},
+      {validFrom:'2019-01-05', validUntil:null, change:'停运，改开行D717/718次CR200J动力集中动车组（通勤动集）', adjustVersion:'2019年1月5日调图'}
+    ],
+    createdAt:'2026-08-03'
+  },
+  {
+    id:'T004', no:'02457', code:'G7', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'19:00', arrive:'23:24',
+    duration:'4h 24min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'2017年Q3调图·350提速',
+    desc:'2017年9月21日350km/h提速当日开行的7对复兴号之一，与G8次相对。北京南19:00始发、23:24终到上海虹桥，全程4小时24分，是京沪晚间标杆车次。',
+    stops:[{station:'北京南',time:'19:00 始发'},{station:'上海虹桥',time:'23:24 终到'}],
+    versions:[
+      {validFrom:'2017-09-21', validUntil:null, change:'350km/h提速首开7对复兴号成员(G7/G8)，CR400AF担当，北京南19:00→上海虹桥23:24', adjustVersion:'2017年Q3调图·350提速', note:'同批提速车次：G1/G2、G3/G4、G5/G6、G7/G8、G9/G10、G13/G14、G17/G18。'}
+    ],
+    createdAt:'2026-08-01'
+  },
+  {
+    id:'T005', no:'02456', code:'D901', model:'动车',
+    from:'北京西', to:'深圳北', depart:'19:42', arrive:'次日 08:18',
+    duration:'12h 36min', trainType:'CRH2E 卧铺动车组',
+    formation:'16辆编组(动卧/座车)', maxSpeed:'250', operator:'中国铁路北京局',
+    validFrom:'2015-01-01', validUntil:null, adjustVersion:'2015年1月高铁动卧开行',
+    desc:'京广高铁"夕发朝至"标杆动卧，北京西至深圳北。2015年1月随全国8对高铁动卧同步开行，逢周一、五、六、日开行。现行19:42自北京西始发，经停石家庄、郑州东（鹤壁东至广州南约1736公里间仅技术停车不上下客），次日8:18终到深圳北。',
+    stops:[{station:'北京西',time:'19:42 始发'},{station:'涿州东',time:'20:08/20:21'},{station:'石家庄',time:'21:25/21:28'},{station:'郑州东',time:'23:09/23:19'},{station:'广州北',time:'次日 06:23/06:25'},{station:'广州',time:'次日 06:47/06:51'},{station:'广州新塘',time:'次日 07:19/07:21'},{station:'东莞南',time:'次日 07:54/07:56'},{station:'深圳北',time:'次日 08:18 终到'}],
+    versions:[
+      {validFrom:'2015-01-01', validUntil:'2015-07-02', change:'高铁动卧夕发朝至首开，北京西—深圳北，使用CRH1E/CRH2E型卧铺动车组，20:10发、次日7:06到', adjustVersion:'2015年1月1日高铁动卧开行', note:'中国首批8对高铁动卧之一，逢周一、周五、周六、周日开行，免费供应晚餐，一站直达。'},
+      {validFrom:'2015-07-03', validUntil:null, change:'全国调图优化时刻，改为经停涿州东、石家庄、郑州东，郑州东—广州南间技术停车（武汉、长沙南换司机不办客）', adjustVersion:'2015年7月3日调整时刻', note:'高峰时段郑州东—广州南约1736公里间无办客停点，实现"一站直达"。'}
+    ],
+    createdAt:'2026-07-29'
+  },
+  {
+    id:'T006', no:'02455', code:'T109', model:'特快',
+    from:'北京', to:'上海', depart:'20:04', arrive:'次日 11:02',
+    duration:'14h 58min', trainType:'25K 客车',
+    formation:'18辆编组(硬卧/软卧/硬座)', maxSpeed:'140', operator:'中国铁路北京局',
+    validFrom:'2001-10-21', validUntil:null, adjustVersion:'2011-07 京沪高铁开通后调整',
+    desc:'京沪线硕果仅存的传统"夕发朝至"特快之一，2001年第四次大提速开行。2011年京沪高铁开通时6对普速停运，仅保留本车并增加停站，是京沪线经典的性价比夜行选择。',
+    stops:[{station:'北京',time:'20:04'},{station:'天津西',time:'21:32'},{station:'德州',time:'23:39'},{station:'徐州',time:'次日 04:11'},{station:'南京',time:'次日 07:49'},{station:'无锡',time:'次日 09:36'},{station:'苏州',time:'次日 10:08'},{station:'上海',time:'次日 11:02'}],
+    versions:[
+      {validFrom:'2001-10-21', validUntil:'2011-06-30', change:'2001年10月21日第四次大提速开行，途停无锡/常州/徐州三站', adjustVersion:'2001 第四次大提速'},
+      {validFrom:'2011-07-01', validUntil:null, change:'京沪高铁开通，倒数6对京沪普速取消，T109/110保留并增加停站，运行时间延至14小时58分', adjustVersion:'2011-07 京沪高铁开通后调整'}
+    ],
+    createdAt:'2026-07-25'
+  },
+  {
+    id:'T007', no:'02454', code:'Z97', model:'直达特快',
+    from:'北京西', to:'广州', depart:'13:08', arrive:'次日 11:20',
+    duration:'22h 12min', trainType:'25T 客车',
+    formation:'19辆编组', maxSpeed:'160', operator:'中国铁路广州局',
+    validFrom:'1997-05-18', validUntil:'2020-01-30', adjustVersion:'2020 疫情停运 → 高铁替代',
+    desc:'"京九直通车"，前身是北京—广州47/48次特快，1997年香港回归时开行至香港红磡，是京广/广九铁路最具代表性的跨粤直达列车。2020年疫情停运，2024年6月15日由北京西—香港西九龙高铁动卧接替。',
+    stops:[{station:'北京西',time:'13:08'},{station:'郑州',time:'次日 05:20'},{station:'武昌',time:'次日 09:30'},{station:'长沙',time:'次日 11:20'}],
+    versions:[
+      {validFrom:'1997-05-18', validUntil:'2019-12-31', change:'1997年开行京九直通车（K97→T97→Z97），北京西—广州东/香港红磡', adjustVersion:'1997 京九直通车开行'},
+      {validFrom:'2020-01-30', validUntil:null, change:'香港口岸关闭，列车停运；2024年6月15日起由北京西—香港西九龙G897/8高铁动卧替代', adjustVersion:'2020 疫情停运'}
+    ],
+    createdAt:'2026-07-20'
+  },
+  {
+    id:'T008', no:'02453', code:'G75', model:'高铁',
+    from:'郑州东', to:'深圳北', depart:'14:28', arrive:'21:38',
+    duration:'7h 10min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路郑州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁长途列车，纵贯京广高铁并接入广深港高铁，郑州东14:28始发、深圳北21:38终到，全程1707公里、运行7小时10分，是中原直通珠三角腹地的代表车次。',
+    stops:[{station:'郑州东',time:'14:28 始发'},{station:'许昌东',time:'14:50/14:59'},{station:'漯河西',time:'15:15/15:17'},{station:'驻马店西',time:'15:35/15:37'},{station:'信阳东',time:'16:02/16:05'},{station:'武汉',time:'16:49/16:53'},{station:'长沙南',time:'18:11/18:15'},{station:'株洲西',time:'18:30/18:32'},{station:'衡阳东',time:'18:59/19:01'},{station:'韶关',time:'20:00/20:02'},{station:'广州南',time:'20:57/21:02'},{station:'虎门',time:'21:19/21:21'},{station:'深圳北',time:'21:38 终到'}],
+    versions:[
+      {validFrom:'2012-12-26', validUntil:null, change:'京广高铁全线开通后开行，郑州东—深圳北，经京广高铁、广深港高铁运行，全程1707公里、7小时10分', adjustVersion:'现行图定', note:'跨武汉、长沙南、广州南三大枢纽，是京广线中段南下广深的代表班次。'}
+    ],
+    createdAt:'2026-07-18'
+  },
+  {
+    id:'T009', no:'02452', code:'Z21', model:'直达特快',
+    from:'北京西', to:'拉萨', depart:'20:00', arrive:'第3日 12:10',
+    duration:'40h 20min', trainType:'25T 高原客车',
+    formation:'硬卧/软卧/餐车', maxSpeed:'160', operator:'中国铁路青藏集团',
+    validFrom:'2006-07-01', validUntil:null, adjustVersion:'2014-12-10 升级为直达特快',
+    desc:'青藏铁路开行时的进藏列车，前身T27/28次，2006年7月1日青藏铁路贯通当日开行（每日一班）。2014年12月10日升级为Z21/22直达特快。全程西宁以西藏段高原供氧，是进藏明星列车。',
+    stops:[{station:'北京西',time:'20:00'},{station:'太原',time:'次日 00:26'},{station:'兰州',time:'次日 12:30'},{station:'西宁',time:'次日 15:30'},{station:'格尔木',time:'次日 22:00'},{station:'那曲',time:'第3日 08:00'},{station:'拉萨',time:'第3日 12:10'}],
+    versions:[
+      {validFrom:'2006-07-01', validUntil:'2014-12-09', change:'青藏铁路贯通当日开行，车次T27/28，北京西—拉萨', adjustVersion:'2006 青藏铁路开行'},
+      {validFrom:'2014-12-10', validUntil:'2016-01-31', change:'铁路调图升级为直达特快，车次改为Z21/22（北京西20:00→拉萨第3日12:10）', adjustVersion:'2014-12-10 升级直达特快'},
+      {validFrom:'2016-02-01', validUntil:null, change:'调整始发时刻与担当路局，纳入青藏铁路公司运营，维持每日一班', adjustVersion:'2016 调图'}
+    ],
+    createdAt:'2026-07-16'
+  },
+  {
+    id:'T010', no:'02451', code:'G2', model:'高铁',
+    from:'上海虹桥', to:'北京南', depart:'06:43', arrive:'11:32',
+    duration:'4h 49min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'2024年Q2调图',
+    desc:'京沪高铁350km/h提速首开7对"复兴号"中与G1相对的上行标杆车次。上海虹桥06:43始发、北京南11:32终到，全程1318公里，现行停苏州北、镇江南、南京南、蚌埠南、济南西。',
+    stops:[{station:'上海虹桥',time:'06:43 始发'},{station:'苏州北',time:'07:04/07:06'},{station:'镇江南',time:'07:37/07:39'},{station:'南京南',time:'07:58/08:01'},{station:'蚌埠南',time:'08:40/08:42'},{station:'济南西',time:'10:06/10:09'},{station:'北京南',time:'11:32 终到'}],
+    versions:[
+      {validFrom:'2017-09-21', validUntil:'2021-06-24', change:'350km/h提速首开7对复兴号成员(G1/G2)，上海虹桥9:00→北京南13:28，全程约4小时28分', adjustVersion:'2017年Q3调图·350提速', note:'与G1相对，构成京沪"第一号"车次对。'},
+      {validFrom:'2021-06-25', validUntil:null, change:'增停苏州北、镇江南、蚌埠南并改为06:43开、11:32到，兼顾更多中间站客流', adjustVersion:'2021年后多次调图', note:'仍为京沪方向早晚标杆车之一。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T011', no:'02450', code:'G9', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'10:00', arrive:'14:35',
+    duration:'4h 35min', trainType:'CR400AF-B 复兴号',
+    formation:'17辆编组', maxSpeed:'350', operator:'中国铁路北京局',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁"复兴号"标杆车次，CR400AF-B型17编组担当。北京南10:00始发、上海虹桥14:35终到，中途仅停济南西、南京南、无锡东三站，是京沪间大站快车代表。',
+    stops:[{station:'北京南',time:'10:00 始发'},{station:'济南西',time:'11:23/11:26'},{station:'南京南',time:'13:24/13:26'},{station:'无锡东',time:'14:05/14:07'},{station:'上海虹桥',time:'14:35 终到'}],
+    versions:[
+      {validFrom:'2017-09-21', validUntil:'2019-12-31', change:'350提速初期曾作北京南19:05→上海虹桥23:39的晚间车', adjustVersion:'2017年Q3调图', note:'晚间时段曾为京沪末班标杆。'},
+      {validFrom:'2020-01-01', validUntil:null, change:'调整至日间10:00开行，增停无锡东，北京南→上海虹桥4小时35分', adjustVersion:'2020年后调图', note:'现由CR400AF-B(17编组)复兴号担当。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T012', no:'02449', code:'T110', model:'特快',
+    from:'上海', to:'北京', depart:'16:30', arrive:'次日 08:33',
+    duration:'16h 3min', trainType:'25K 客车',
+    formation:'硬卧/软卧/硬座/餐车', maxSpeed:'140', operator:'中国铁路北京局',
+    validFrom:'2001-10-21', validUntil:null, adjustVersion:'2011-07 京沪高铁开通后调整',
+    desc:'与T109对开的京沪线"夕发朝至"特快，2001年第四次大提速开行。上海16:30始发、次日8:33终到北京，全程1463公里，与T109构成京沪间仅存的经典夜行特快对。',
+    stops:[{station:'上海',time:'16:30'},{station:'苏州',time:'17:20/17:25'},{station:'无锡',time:'17:50/17:55'},{station:'常州',time:'18:18/18:23'},{station:'南京',time:'19:58/20:07'},{station:'徐州',time:'23:17/23:28'},{station:'德州',time:'次日 03:29/03:32'},{station:'沧州',time:'次日 04:28/04:32'},{station:'天津西',time:'次日 06:30/06:33'},{station:'广阳',time:'次日 07:13/07:22'},{station:'北京',time:'次日 08:33 终到'}],
+    versions:[
+      {validFrom:'2001-10-21', validUntil:'2011-06-30', change:'第四次大提速新增开行T109/110，与原T103/104成对，京沪"夕发朝至"特快网', adjustVersion:'2001 第四次大提速', note:'早期仅停无锡、常州、徐州，运行时间更短。'},
+      {validFrom:'2011-07-01', validUntil:null, change:'京沪高铁开通后倒6对普速停运，T109/110保留并增加停站，运行时间延长至16小时左右', adjustVersion:'2011-07 京沪高铁开通后调整', note:'票价低廉、性价比较高，曾一票难求。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T013', no:'02448', code:'G79', model:'高铁',
+    from:'北京西', to:'广州南', depart:'10:00', arrive:'17:59',
+    duration:'7h 59min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路广州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁标杆车次，北京西10:00始发、广州南17:59终到，全程2298公里、运行7小时59分，逢石家庄、郑州东、武汉、长沙南停靠，是华北—华南大动脉的代表列车。',
+    stops:[{station:'北京西',time:'10:00 始发'},{station:'石家庄',time:'11:07/11:09'},{station:'郑州东',time:'12:30/12:33'},{station:'武汉',time:'14:17/14:20'},{station:'长沙南',time:'15:38/15:41'},{station:'广州南',time:'17:59 终到'}],
+    versions:[
+      {validFrom:'2012-12-26', validUntil:null, change:'京广高铁全线开通后作为标杆开行，北京西—广州南，约8小时直达', adjustVersion:'2012年京广高铁开通', note:'京广高铁纵贯华北、华中、华南，联通两省市一自治区。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T014', no:'02447', code:'G80', model:'高铁',
+    from:'广州南', to:'北京西', depart:'10:00', arrive:'17:59',
+    duration:'7h 59min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路广州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'与G79对开的京广高铁上行标杆，广州南10:00始发、北京西17:59终到，中途停长沙南、武汉、郑州东、石家庄，全程约8小时。',
+    stops:[{station:'广州南',time:'10:00 始发'},{station:'长沙南',time:'12:17/12:20'},{station:'武汉',time:'13:38/13:41'},{station:'郑州东',time:'15:26/15:29'},{station:'石家庄',time:'16:50/16:53'},{station:'北京西',time:'17:59 终到'}],
+    versions:[
+      {validFrom:'2012-12-26', validUntil:null, change:'京广高铁标杆下行车，与G79成对运行，广州南—北京西', adjustVersion:'2012年京广高铁开通'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T015', no:'02446', code:'G71', model:'高铁',
+    from:'北京西', to:'深圳北', depart:'08:00', arrive:'18:05',
+    duration:'10h 5min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路广州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁长交路标杆，纵贯京广高铁并接入广深港高铁，北京西08:00始发、深圳北18:05终到，全程2400公里、运行10小时05分。',
+    stops:[{station:'北京西',time:'08:00'},{station:'保定东',time:'08:41/08:43'},{station:'石家庄',time:'09:19/09:22'},{station:'邯郸东',time:'10:01/10:03'},{station:'新乡东',time:'10:41/10:43'},{station:'郑州东',time:'11:04/11:07'},{station:'驻马店西',time:'11:53/11:55'},{station:'孝感北',time:'12:33/12:35'},{station:'武汉',time:'13:06/13:10'},{station:'岳阳东',time:'13:58/14:00'},{station:'长沙南',time:'14:34/14:37'},{station:'衡阳东',time:'15:16/15:18'},{station:'耒阳西',time:'15:35/15:37'},{station:'郴州西',time:'15:58/16:00'},{station:'广州南',time:'17:26/17:31'},{station:'深圳北',time:'18:05 终到'}],
+    versions:[
+      {validFrom:'2012-12-26', validUntil:null, change:'北京西—深圳北长交路标杆，经京广、广深港高铁运行，约10小时', adjustVersion:'现行图定', note:'南下广深需经广州南枢纽换线进入广深港高铁。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T016', no:'02445', code:'D909', model:'动车',
+    from:'北京西', to:'香港西九龙', depart:'20:13', arrive:'次日 08:47',
+    duration:'12h 34min', trainType:'复兴号卧铺动车组',
+    formation:'动卧编组', maxSpeed:'250', operator:'中国铁路北京局',
+    validFrom:'2024-06-15', validUntil:null, adjustVersion:'2024-06-15 京港动卧开行',
+    desc:'京港高铁动卧，2024年6月15日起与原京九直通车Z97/98提质升级而来，北京西20:13始发、次日8:47终到香港西九龙，经京广、广深港高铁运行，实现京港夕发朝至。',
+    stops:[{station:'北京西',time:'20:13 始发'},{station:'石家庄',time:'夜间'},{station:'郑州东',time:'夜间'},{station:'武汉',time:'凌晨'},{station:'长沙南',time:'凌晨'},{station:'广州南',time:'清晨'},{station:'深圳北',time:'次日 07:30'},{station:'香港西九龙',time:'次日 08:47 终到'}],
+    versions:[
+      {validFrom:'2024-06-15', validUntil:null, change:'与原京港普速直通车Z97/98提质升级，北京西—香港西九龙高铁动卧，行程压缩至12小时34分', adjustVersion:'2024-06-15 京港动卧', note:'京港间实现夕发朝至，与D907/908（沪港）同步开行。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T017', no:'02444', code:'Z164', model:'直达特快',
+    from:'上海', to:'拉萨', depart:'19:33', arrive:'第3日 18:46',
+    duration:'47h 13min', trainType:'25T 高原客车',
+    formation:'硬卧/软卧/餐车', maxSpeed:'160', operator:'中国铁路青藏集团',
+    validFrom:'2006-10-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'上海至拉萨直达特快，全程4373公里，是中国运行里程最长的旅客列车之一，跨京沪、陇海、青藏三条干线，上海19:33始发、第3日18:46终到拉萨，西宁以西全程高原供氧。',
+    stops:[{station:'上海',time:'19:33 始发'},{station:'苏州',time:'20:15/20:19'},{station:'无锡',time:'20:42/20:46'},{station:'南京',time:'21:49/21:56'},{station:'郑州',time:'次日 08:00'},{station:'西安',time:'次日 13:30'},{station:'兰州',time:'次日 18:00'},{station:'西宁',time:'次日 20:30'},{station:'格尔木',time:'第3日 04:00'},{station:'拉萨',time:'第3日 18:46 终到'}],
+    versions:[
+      {validFrom:'2006-10-01', validUntil:null, change:'青藏铁路格拉段开通后开行，上海—拉萨，我国里程最长的旅客列车之一', adjustVersion:'2006 青藏铁路开通', note:'经京沪、陇海、青藏三线，全程供氧，是进藏的经典夜用直达列车。'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T018', no:'02443', code:'G3', model:'高铁',
+    from:'北京南', to:'上海', depart:'06:52', arrive:'11:33',
+    duration:'4h 41min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁350km/h提速首开7对复兴号成员之一。北京南06:52始发、上海11:33终到（以上海站为终点），中途停天津南、南京南、苏州北，全程约4小时41分。',
+    stops:[{station:'北京南',time:'06:52 始发'},{station:'天津南',time:'07:23/07:25'},{station:'南京南',time:'10:17/10:19'},{station:'苏州北',time:'11:04/11:06'},{station:'上海',time:'11:33 终到'}],
+    versions:[
+      {validFrom:'2017-09-21', validUntil:null, change:'与G4成对的350提速复兴号，北京南—上海，增停天津南', adjustVersion:'2017年Q3调图·350提速'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T019', no:'02442', code:'G5', model:'高铁',
+    from:'北京', to:'上海', depart:'07:40', arrive:'12:32',
+    duration:'4h 52min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁标杆车，特殊在于自北京站（而非北京南）始发。北京07:40开、经北京南、济南西、南京南，12:32终到上海站，全程4小时52分。',
+    stops:[{station:'北京',time:'07:40 始发'},{station:'北京南',time:'07:54/07:59'},{station:'济南西',time:'09:22/09:26'},{station:'南京南',time:'11:23/11:25'},{station:'上海',time:'12:32 终到'}],
+    versions:[
+      {validFrom:'2017-09-21', validUntil:null, change:'350提速复兴号专列，自北京站发车，兼顾市区客流', adjustVersion:'2017年Q3调图·350提速'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T020', no:'02441', code:'G6', model:'高铁',
+    from:'上海虹桥', to:'北京南', depart:'07:00', arrive:'11:24',
+    duration:'4h 24min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁单程整点快车，上海虹桥07:00始发、北京南11:24终到，中途主要停靠南京南、济南西，运行4小时24分。',
+    stops:[{station:'上海虹桥',time:'07:00 始发'},{station:'南京南',time:'08:00/08:02'},{station:'济南西',time:'10:06/10:08'},{station:'北京南',time:'11:24 终到'}],
+    versions:[
+      {validFrom:'2017-09-21', validUntil:null, change:'京沪单程整点快车标杆', adjustVersion:'2017年Q3调图'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T021', no:'02440', code:'G10', model:'高铁',
+    from:'上海虹桥', to:'北京南', depart:'08:00', arrive:'12:26',
+    duration:'4h 26min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁上行整点快车，上海虹桥08:00始发、北京南12:26终到，运行4小时26分。',
+    stops:[{station:'上海虹桥',time:'08:00 始发'},{station:'南京南',time:'09:00/09:02'},{station:'济南西',time:'11:06/11:08'},{station:'北京南',time:'12:26 终到'}],
+    versions:[{validFrom:'2017-09-21', validUntil:null, change:'京沪整点直达快车', adjustVersion:'2017年Q3调图'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T022', no:'02439', code:'G14', model:'高铁',
+    from:'上海虹桥', to:'北京南', depart:'09:00', arrive:'13:28',
+    duration:'4h 28min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁上行整点快车，上海虹桥09:00始发、北京南13:28终到，运行4小时28分。',
+    stops:[{station:'上海虹桥',time:'09:00 始发'},{station:'南京南',time:'10:00/10:02'},{station:'济南西',time:'12:06/12:08'},{station:'北京南',time:'13:28 终到'}],
+    versions:[{validFrom:'2017-09-21', validUntil:null, change:'京沪整点直达快车', adjustVersion:'2017年Q3调图'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T023', no:'02438', code:'G18', model:'高铁',
+    from:'上海虹桥', to:'北京南', depart:'10:00', arrive:'14:28',
+    duration:'4h 28min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁上行整点快车，上海虹桥10:00始发、北京南14:28终到，运行4小时28分。',
+    stops:[{station:'上海虹桥',time:'10:00 始发'},{station:'南京南',time:'11:00/11:02'},{station:'济南西',time:'13:06/13:08'},{station:'北京南',time:'14:28 终到'}],
+    versions:[{validFrom:'2017-09-21', validUntil:null, change:'京沪整点直达快车', adjustVersion:'2017年Q3调图'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T024', no:'02437', code:'G22', model:'高铁',
+    from:'上海虹桥', to:'北京南', depart:'11:00', arrive:'15:28',
+    duration:'4h 28min', trainType:'CR400AF 复兴号',
+    formation:'8辆编组(4M4T)', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2017-09-21', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁上行整点快车，上海虹桥11:00始发、北京南15:28终到，运行4小时28分。',
+    stops:[{station:'上海虹桥',time:'11:00 始发'},{station:'南京南',time:'12:00/12:02'},{station:'济南西',time:'14:06/14:08'},{station:'北京南',time:'15:28 终到'}],
+    versions:[{validFrom:'2017-09-21', validUntil:null, change:'京沪整点直达快车', adjustVersion:'2017年Q3调图'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T025', no:'02436', code:'G77', model:'高铁',
+    from:'北京西', to:'广州南', depart:'08:00', arrive:'16:00',
+    duration:'8h', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路广州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁标杆，北京西08:00始发、广州南16:00终到，全程约8小时，中途停石家庄、郑州东、武汉、长沙南、衡阳东。',
+    stops:[{station:'北京西',time:'08:00 始发'},{station:'石家庄',time:'09:00/09:02'},{station:'郑州东',time:'10:13/10:16'},{station:'武汉',time:'11:47/11:50'},{station:'长沙南',time:'13:15/13:18'},{station:'衡阳东',time:'14:00/14:02'},{station:'广州南',time:'16:00 终到'}],
+    versions:[{validFrom:'2012-12-26', validUntil:null, change:'京广高铁标杆，约8小时直达', adjustVersion:'2012年京广高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T026', no:'02435', code:'G81', model:'高铁',
+    from:'北京西', to:'深圳北', depart:'14:00', arrive:'22:24',
+    duration:'8h 24min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路北京局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁长交路列车，纵贯京广并接入广深港高铁。北京西14:00始发、深圳北22:24终到，全程11站、运行8小时24分。',
+    stops:[{station:'北京西',time:'14:00 始发'},{station:'石家庄',time:'15:01/15:03'},{station:'鹤壁东',time:'15:56/15:58'},{station:'郑州东',time:'16:26/16:29'},{station:'驻马店西',time:'17:12/17:14'},{station:'武汉',time:'18:11/18:15'},{station:'长沙南',time:'19:26/19:29'},{station:'衡阳东',time:'20:03/20:05'},{station:'广州南',time:'21:44/21:48'},{station:'虎门',time:'22:05/22:07'},{station:'深圳北',time:'22:24 终到'}],
+    versions:[
+      {validFrom:'2012-12-26', validUntil:'2020-12-31', change:'早期仅北京西—广州南，停保定东、邯郸东等，约9小时27分', adjustVersion:'2012年京广高铁开通'},
+      {validFrom:'2021-01-01', validUntil:null, change:'延伸至深圳北，经广深港高铁，增停虎门，全程8小时24分', adjustVersion:'2021年后调图'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T027', no:'02434', code:'G72', model:'高铁',
+    from:'深圳北', to:'北京西', depart:'07:53', arrive:'18:21',
+    duration:'10h 28min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路广州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'与G71对开的京广长交路上行车，深圳北07:53始发、北京西18:21终到，全程2400公里、运行10小时28分。',
+    stops:[{station:'深圳北',time:'07:53 始发'},{station:'广州南',time:'08:22/08:27'},{station:'耒阳西',time:'10:02/10:04'},{station:'衡山西',time:'10:29/10:31'},{station:'株洲西',time:'10:50/10:52'},{station:'长沙南',time:'11:07/11:11'},{station:'岳阳东',time:'11:45/11:52'},{station:'武汉',time:'12:44/12:50'},{station:'驻马店西',time:'13:53/13:55'},{station:'漯河西',time:'14:13/14:23'},{station:'郑州东',time:'14:57/15:01'},{station:'鹤壁东',time:'15:32/15:34'},{station:'邯郸东',time:'16:01/16:20'},{station:'石家庄',time:'16:59/17:02'},{station:'保定东',time:'17:38/17:40'},{station:'北京西',time:'18:21 终到'}],
+    versions:[
+      {validFrom:'2012-12-26', validUntil:null, change:'与G71配对的长交路标杆，深圳北—北京西约10.5小时', adjustVersion:'2012年京广高铁开通'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T028', no:'02433', code:'D35', model:'动车',
+    from:'北京西', to:'广州白云', depart:'09:17', arrive:'次日 06:39',
+    duration:'21h 22min', trainType:'CR200J 复兴号动力集中动车组',
+    formation:'动集编组', maxSpeed:'160', operator:'中国铁路北京局',
+    validFrom:'2020-06-20', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广既有线动力集中动车组，北京西09:17始发、次日6:39终到广州白云，经郑州、武昌、长沙南下，是既有线"夕发朝至"的客运动力车。',
+    stops:[{station:'北京西',time:'09:17 始发'},{station:'郑州',time:'夜间'},{station:'武昌',time:'深夜'},{station:'长沙',time:'次日凌晨'},{station:'广州白云',time:'次日 06:39 终到'}],
+    versions:[
+      {validFrom:'2020-06-20', validUntil:null, change:'既有线动车化亮相，北京西—广州既有线夕发朝至', adjustVersion:'2020 京广既有线动集上线'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T029', no:'02432', code:'Z13', model:'直达特快',
+    from:'北京丰台', to:'广州', depart:'14:24', arrive:'次日 12:41',
+    duration:'22h 17min', trainType:'25T 直达客车',
+    formation:'硬卧/软卧/餐车', maxSpeed:'160', operator:'中国铁路广州局',
+    validFrom:'2017-01-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广既有线直达特快，北京丰台14:24始发、次日12:41终到广州，中途停石家庄、郑州、武昌、长沙、衡阳、郴州，全程约2298公里。',
+    stops:[{station:'北京丰台',time:'14:24 始发'},{station:'石家庄',time:'夜间'},{station:'郑州',time:'夜间'},{station:'武昌',time:'深夜'},{station:'长沙',time:'次日凌晨'},{station:'衡阳',time:'次日清晨'},{station:'郴州',time:'次日上午'},{station:'广州',time:'次日 12:41 终到'}],
+    versions:[
+      {validFrom:'2017-01-01', validUntil:null, change:'京广既有线直达特快，北京丰台—广州', adjustVersion:'2017 直达特快图定'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T030', no:'02431', code:'D921', model:'动车',
+    from:'北京西', to:'广州南', depart:'19:36', arrive:'次日 06:28',
+    duration:'10h 52min', trainType:'CRH2E 卧铺动车组',
+    formation:'16辆编组(动卧/座车)', maxSpeed:'250', operator:'中国铁路北京局',
+    validFrom:'2015-01-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁动卧，北京西19:36始发、次日6:28终到广州南，经保定东、石家庄、郑州东，夕发朝至。',
+    stops:[{station:'北京西',time:'19:36 始发'},{station:'保定东',time:'夜间'},{station:'石家庄',time:'夜间'},{station:'郑州东',time:'深夜'},{station:'广州南',time:'次日 06:28 终到'}],
+    versions:[
+      {validFrom:'2015-01-01', validUntil:null, change:'高铁动卧夕发朝至，北京西—广州南', adjustVersion:'2015年1月高铁动卧开行'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T031', no:'02430', code:'D923', model:'动车',
+    from:'北京西', to:'广州南', depart:'20:27', arrive:'次日 06:43',
+    duration:'10h 16min', trainType:'CRH2E 卧铺动车组',
+    formation:'16辆编组(动卧/座车)', maxSpeed:'250', operator:'中国铁路北京局',
+    validFrom:'2015-01-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁动卧，北京西20:27始发、次日6:43终到广州南，经保定东、石家庄、郑州东，夕发朝至。',
+    stops:[{station:'北京西',time:'20:27 始发'},{station:'保定东',time:'夜间'},{station:'石家庄',time:'夜间'},{station:'郑州东',time:'深夜'},{station:'广州南',time:'次日 06:43 终到'}],
+    versions:[
+      {validFrom:'2015-01-01', validUntil:null, change:'高铁动卧夕发朝至，北京西—广州南', adjustVersion:'2015年1月高铁动卧开行'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T032', no:'02429', code:'D927', model:'动车',
+    from:'北京西', to:'广州南', depart:'20:18', arrive:'次日 06:53',
+    duration:'10h 35min', trainType:'CRH2E 卧铺动车组',
+    formation:'16辆编组(动卧/座车)', maxSpeed:'250', operator:'中国铁路北京局',
+    validFrom:'2015-01-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁动卧，北京西20:18始发、次日6:53终到广州南，经石家庄、邢台东、郑州东，夕发朝至。',
+    stops:[{station:'北京西',time:'20:18 始发'},{station:'石家庄',time:'夜间'},{station:'邢台东',time:'夜间'},{station:'郑州东',time:'深夜'},{station:'广州南',time:'次日 06:53 终到'}],
+    versions:[
+      {validFrom:'2015-01-01', validUntil:null, change:'高铁动卧夕发朝至，北京西—广州南', adjustVersion:'2015年1月高铁动卧开行'}
+    ],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T033', no:'02428', code:'G103', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'06:20', arrive:'11:58',
+    duration:'5h 38min', trainType:'CR400BF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁早班次，北京南06:20始发、上海虹桥11:58终到，停靠沧州、济南、徐州、蚌埠、南京等中间站，运行5小时38分。',
+    stops:[{station:'北京南',time:'06:20 始发'},{station:'沧州西',time:'07:03/07:06'},{station:'德州东',time:'07:30/07:32'},{station:'济南西',time:'07:56/08:00'},{station:'徐州东',time:'09:14/09:17'},{station:'宿州东',time:'09:38/09:40'},{station:'蚌埠南',time:'10:08/10:10'},{station:'南京南',time:'11:02/11:05'},{station:'无锡东',time:'11:45/11:47'},{station:'上海虹桥',time:'11:58 终到'}],
+    versions:[{validFrom:'2011-06-30', validUntil:null, change:'京沪高铁早班车，经停多站便利沿线客流', adjustVersion:'2011京沪高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T034', no:'02427', code:'G105', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'07:17', arrive:'13:03',
+    duration:'5h 46min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁白天班次，北京南07:17始发、上海虹桥13:03终到，经沧州西、济南西、曲阜东、徐州东、宿州东、南京南、常州北。',
+    stops:[{station:'北京南',time:'07:17 始发'},{station:'沧州西',time:'08:00/08:02'},{station:'济南西',time:'08:48/08:51'},{station:'曲阜东',time:'09:16/09:18'},{station:'徐州东',time:'09:58/10:00'},{station:'宿州东',time:'10:20/10:22'},{station:'南京南',time:'11:31/11:34'},{station:'常州北',time:'12:20/12:22'},{station:'上海虹桥',time:'13:03 终到'}],
+    versions:[{validFrom:'2011-06-30', validUntil:null, change:'京沪地区通勤经停班次', adjustVersion:'2011京沪高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T035', no:'02426', code:'G109', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'07:45', arrive:'13:48',
+    duration:'6h 3min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁经停较多的班次，北京南07:45始发、上海虹桥13:48终到，沧州、德州、济南、滕州、徐州、南京、无锡、苏州、昆山等10余站。',
+    stops:[{station:'北京南',time:'07:45 始发'},{station:'沧州西',time:'08:28/08:30'},{station:'德州东',time:'08:54/08:56'},{station:'济南西',time:'09:22/09:25'},{station:'滕州东',time:'10:10/10:12'},{station:'徐州东',time:'10:50/10:53'},{station:'南京南',time:'12:00/12:03'},{station:'无锡东',time:'12:43/12:45'},{station:'苏州北',time:'12:59/13:01'},{station:'昆山南',time:'13:12/13:14'},{station:'上海虹桥',time:'13:48 终到'}],
+    versions:[{validFrom:'2011-06-30', validUntil:null, change:'京沪间站站乐式快班', adjustVersion:'2011京沪高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T036', no:'02425', code:'G119', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'09:24', arrive:'15:32',
+    duration:'6h 8min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁中段班次，北京南09:24始发、上海虹桥15:32终到，经天津南、德州东、济南西、泰安、徐州东、蚌埠南、南京南、常州北、苏州北、昆山南。',
+    stops:[{station:'北京南',time:'09:24 始发'},{station:'天津南',time:'09:55/09:57'},{station:'德州东',time:'10:37/10:39'},{station:'济南西',time:'11:05/11:07'},{station:'泰安',time:'11:25/11:27'},{station:'徐州东',time:'12:20/12:23'},{station:'蚌埠南',time:'13:10/13:12'},{station:'南京南',time:'14:10/14:13'},{station:'常州北',time:'14:52/14:54'},{station:'苏州北',time:'15:12/15:14'},{station:'昆山南',time:'15:25/15:27'},{station:'上海虹桥',time:'15:32 终到'}],
+    versions:[{validFrom:'2011-06-30', validUntil:null, change:'京沪高铁午前通勤班次', adjustVersion:'2011京沪高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T037', no:'02424', code:'G11', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'10:03', arrive:'14:39',
+    duration:'4h 36min', trainType:'CR400AF-B 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路北京局',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁单程快车，北京南10:03始发、上海虹桥14:39终到，中途主要停济南西、南京南，运行4小时36分。',
+    stops:[{station:'北京南',time:'10:03 始发'},{station:'济南西',time:'11:26/11:28'},{station:'南京南',time:'13:23/13:25'},{station:'上海虹桥',time:'14:39 终到'}],
+    versions:[{validFrom:'2011-06-30', validUntil:null, change:'京沪单程大站快车', adjustVersion:'2011京沪高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T038', no:'02423', code:'G23', model:'高铁',
+    from:'北京南', to:'上海虹桥', depart:'11:00', arrive:'15:37',
+    duration:'4h 37min', trainType:'CR400BF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路上海局集团',
+    validFrom:'2011-06-30', validUntil:null, adjustVersion:'现行图定',
+    desc:'京沪高铁午间快车，北京南11:00始发、上海虹桥15:37终到，中途停济南西、南京南、无锡东，运行4小时37分。',
+    stops:[{station:'北京南',time:'11:00 始发'},{station:'济南西',time:'12:23/12:26'},{station:'南京南',time:'14:23/14:25'},{station:'无锡东',time:'15:05/15:07'},{station:'上海虹桥',time:'15:37 终到'}],
+    versions:[{validFrom:'2011-06-30', validUntil:null, change:'京沪午间整点快车', adjustVersion:'2011京沪高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T039', no:'02422', code:'G335', model:'高铁',
+    from:'北京西', to:'广州南', depart:'07:26', arrive:'17:19',
+    duration:'9h 53min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路广州局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁班次，北京西07:26始发、广州南17:19终到，全程约9小时53分，经高碑店东、保定东、石家庄、邯郸东、郑州东、武汉、长沙南、郴州西、韶关等站。',
+    stops:[{station:'北京西',time:'07:26 始发'},{station:'高碑店东',time:'07:58/08:00'},{station:'保定东',time:'08:14/08:16'},{station:'定州东',time:'08:34/08:36'},{station:'石家庄',time:'08:59/09:02'},{station:'邯郸东',time:'09:44/09:46'},{station:'安阳东',time:'10:02/10:04'},{station:'新乡东',time:'10:28/10:30'},{station:'郑州东',time:'11:00/11:04'},{station:'漯河西',time:'11:52/11:54'},{station:'武汉',time:'13:00/13:04'},{station:'长沙南',time:'14:36/14:39'},{station:'郴州西',time:'15:52/15:54'},{station:'韶关',time:'16:40/16:42'},{station:'广州南',time:'17:19 终到'}],
+    versions:[{validFrom:'2012-12-26', validUntil:null, change:'京广高铁经停班次', adjustVersion:'2012年京广高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T040', no:'02421', code:'G337', model:'高铁',
+    from:'北京西', to:'广州南', depart:'10:23', arrive:'20:27',
+    duration:'10h 4min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路北京局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁午前班次，北京西10:23始发、广州南20:27终到，经高碑店东、石家庄、邢台东、邯郸东、郑州东、信阳东、武汉、岳阳东、长沙南、郴州西等站。',
+    stops:[{station:'北京西',time:'10:23 始发'},{station:'高碑店东',time:'10:55/10:57'},{station:'石家庄',time:'11:35/11:38'},{station:'邢台东',time:'12:09/12:11'},{station:'邯郸东',time:'12:27/12:29'},{station:'鹤壁东',time:'12:58/13:00'},{station:'新乡东',time:'13:18/13:20'},{station:'郑州东',time:'13:36/13:39'},{station:'信阳东',time:'14:39/14:41'},{station:'孝感北',time:'15:01/15:03'},{station:'武汉',time:'15:25/15:28'},{station:'咸宁北',time:'15:52/15:54'},{station:'岳阳东',time:'16:35/16:37'},{station:'长沙南',time:'17:13/17:16'},{station:'郴州西',time:'18:29/18:31'},{station:'广州南',time:'20:27 终到'}],
+    versions:[{validFrom:'2012-12-26', validUntil:null, change:'京广高铁经停班次', adjustVersion:'2012年京广高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T041', no:'02420', code:'G339', model:'高铁',
+    from:'北京西', to:'广州南', depart:'13:10', arrive:'23:09',
+    duration:'9h 59min', trainType:'CR400AF 复兴号',
+    formation:'16辆编组', maxSpeed:'350', operator:'中国铁路北京局',
+    validFrom:'2012-12-26', validUntil:null, adjustVersion:'现行图定',
+    desc:'京广高铁下午班次，北京西13:10始发、广州南23:09终到，经保定东、石家庄、郑州东、武汉、长沙南、衡阳东、郴州西、韶关等站。',
+    stops:[{station:'北京西',time:'13:10 始发'},{station:'保定东',time:'13:50/13:52'},{station:'石家庄',time:'14:23/14:26'},{station:'邢台东',time:'14:57/14:59'},{station:'鹤壁东',time:'15:27/15:29'},{station:'新乡东',time:'15:47/15:49'},{station:'郑州东',time:'16:05/16:08'},{station:'许昌东',time:'16:36/16:38'},{station:'漯河西',time:'16:53/16:55'},{station:'驻马店西',time:'17:12/17:14'},{station:'信阳东',time:'17:39/17:41'},{station:'武汉',time:'18:19/18:23'},{station:'岳阳东',time:'19:19/19:21'},{station:'长沙南',time:'19:57/20:00'},{station:'衡阳东',time:'20:38/20:40'},{station:'郴州西',time:'21:05/21:07'},{station:'韶关',time:'21:51/21:53'},{station:'广州南',time:'23:09 终到'}],
+    versions:[{validFrom:'2012-12-26', validUntil:null, change:'京广高铁午后班次', adjustVersion:'2012年京广高铁开通'}],
+    createdAt:'2026-08-16'
+  },
+  {
+    id:'T042', no:'02419', code:'Z69', model:'直达特快',
+    from:'北京西', to:'乌鲁木齐', depart:'10:19', arrive:'次日 17:02',
+    duration:'30h 43min', trainType:'25T 直达客车',
+    formation:'硬卧/软卧/餐车', maxSpeed:'160', operator:'中国铁路乌鲁木齐局集团',
+    validFrom:'2014-12-10', validUntil:null, adjustVersion:'现行图定',
+    desc:'兰新铁路标杆直达特快，由1969年开行的69/70次进京列车演变而来。北京西10:19始发、次日17:02终到乌鲁木齐，全程3144公里，经太中银、干武铁路接兰新铁路，是华北进疆性价比最高的夕发朝至干线列车。',
+    stops:[{station:'北京西',time:'10:19 始发'},{station:'保定',time:'11:32/11:35'},{station:'石家庄北',time:'13:00/13:13'},{station:'阳泉北',time:'14:09/14:12'},{station:'太原',time:'15:03/15:12'},{station:'吕梁',time:'16:47/16:50'},{station:'绥德',time:'17:43/17:49'},{station:'靖边',time:'18:59/19:02'},{station:'定边',time:'19:55/20:07'},{station:'中卫',time:'22:19/22:40'},{station:'武威',time:'01:58/02:04'},{station:'金昌',time:'02:45/02:51'},{station:'张掖',time:'04:34/04:40'},{station:'高台',time:'05:14/05:17'},{station:'嘉峪关',time:'06:44/06:52'},{station:'玉门',time:'07:58/08:01'},{station:'哈密',time:'12:32/12:42'},{station:'吐鲁番北',time:'15:35/15:37'},{station:'乌鲁木齐',time:'17:02 终到'}],
+    versions:[
+      {validFrom:'1963-01-15', validUntil:'2000-10-21', change:'原乌鲁木齐—西安69/70次直快，兰新铁路通车后开行；1969年9月延长至北京，后升级为特快T69/70', adjustVersion:'兰新铁路通车', note:'全程3768公里，曾需4天4夜。'},
+      {validFrom:'2011-01-11', validUntil:'2014-12-09', change:'改经太中银、干武铁路，里程缩短663公里，运行时间压缩至34小时以内，不再经兰州', adjustVersion:'太中银铁路开通'},
+      {validFrom:'2014-12-10', validUntil:null, change:'升级为直达特快Z69/70次，多停靠武威、金昌、高台、玉门等站，全程压缩至31小时', adjustVersion:'2014 年升直达特快'}
+    ],
+    createdAt:'2026-08-17'
+  },
+  {
+    id:'T043', no:'02418', code:'K145', model:'快速',
+    from:'成都', to:'昆明', depart:'14:28', arrive:'次日 09:41',
+    duration:'19h 13min', trainType:'25G 空调快速',
+    formation:'硬座/硬卧/软卧/餐车', maxSpeed:'120', operator:'中国铁路成都局集团',
+    validFrom:'1970-07-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'成昆铁路干线快速列车，沿老成昆线纵贯大凉山与滇北纵谷，成都14:28始发、次日09:41终到昆明，全程约1100公里，经眉山、峨眉、汉源、甘洛、越西、西昌、攀枝花、元谋、广通北等站。',
+    stops:[{station:'成都',time:'14:28 始发'},{station:'眉山',time:'15:45/15:51'},{station:'峨眉',time:'16:43/16:46'},{station:'汉源',time:'18:37/18:40'},{station:'甘洛',time:'19:36/19:39'},{station:'越西',time:'20:39/20:42'},{station:'西昌',time:'00:13/00:18'},{station:'攀枝花',time:'03:53/04:02'},{station:'元谋',time:'05:50/05:57'},{station:'广通北',time:'07:49/07:54'},{station:'昆明',time:'09:41 终到'}],
+    versions:[
+      {validFrom:'1970-07-01', validUntil:null, change:'成昆铁路通车后开行成都—昆明间长途客车，是成昆线代表性直通列车', adjustVersion:'成昆铁路通车'}
+    ],
+    createdAt:'2026-08-17'
+  },
+  {
+    id:'T044', no:'02417', code:'5619', model:'普通',
+    from:'峨眉', to:'普雄', depart:'09:08', arrive:'16:42',
+    duration:'7h 34min', trainType:'25B型 非空调普客',
+    formation:'硬座(逢站必停)', maxSpeed:'120', operator:'中国铁路成都局集团',
+    validFrom:'1970-07-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'老成昆铁路公益慢火车，是最早开行于1970年的成昆线上唯一一对客运列车，往返峨眉—普雄、普雄—攀枝花南。峨眉09:08始发、普雄16:42终到，全程240公里、逢站必停、平均时速约35公里，硬座全程仅18.5元，是大凉山彝族同胞出行的"公交车"。',
+    stops:[{station:'峨眉',time:'09:08 始发'},{station:'沙湾',time:'09:43/09:46'},{station:'轸溪',time:'10:04/10:06'},{station:'刘沟',time:'10:18/10:21'},{station:'代湾',time:'10:34/10:36'},{station:'杨漩',time:'10:48/10:51'},{station:'共和',time:'11:04/11:06'},{station:'峨边',time:'11:17/11:20'},{station:'柏村',time:'11:37/11:40'},{station:'金口河',time:'11:56/11:59'},{station:'关村坝',time:'12:12/12:14'},{station:'汉源',time:'12:37/12:42'},{station:'尼日',time:'12:55/12:59'},{station:'苏雄',time:'13:13/13:17'},{station:'凉红',time:'13:31/13:34'},{station:'埃岱',time:'13:45/13:48'},{station:'甘洛',time:'14:00/14:04'},{station:'南尔岗',time:'14:17/14:21'},{station:'阿寨',time:'14:34/14:37'},{station:'白果',time:'14:56/15:00'},{station:'白石岩',time:'15:15/15:19'},{station:'乃托',time:'15:34/15:38'},{station:'铁西',time:'15:50/15:54'},{station:'下普雄',time:'16:06/16:11'},{station:'拉白',time:'16:22/16:28'},{station:'普雄',time:'16:42 终到'}],
+    versions:[
+      {validFrom:'1970-07-01', validUntil:null, change:'成昆铁路通车后开行的沿线慢车，是20世纪人类征服自然三大奇迹之一的铁路上的"活化石"', adjustVersion:'成昆铁路通车', note:'全程票价18.5元，中间小站12306不可查、先上车后补票，两站间最低票价仅1元。'}
+    ],
+    createdAt:'2026-08-17'
+  },
+  {
+    id:'T045', no:'02416', code:'Z273', model:'直达特快',
+    from:'青岛北', to:'西宁', depart:'14:42', arrive:'次日 17:24',
+    duration:'26h 42min', trainType:'25T 直达客车',
+    formation:'硬卧/硬座/软卧/餐车', maxSpeed:'160', operator:'中国铁路济南局集团',
+    validFrom:'2009-04-01', validUntil:null, adjustVersion:'现行图定',
+    desc:'由1975年开行的青岛—西宁K172/173次演变而来的"西北高原一枝花"，2009年起每日开行、2015年升直达特快。青岛北14:42始发、次日17:24终到西宁，经胶济、京沪、陇海、兰青四线，全程约2000公里，是山东进藏的经典大通道列车。',
+    stops:[{station:'青岛北',time:'14:42 始发'},{station:'胶州北',time:'15:07/15:16'},{station:'潍坊',time:'15:59/16:02'},{station:'淄博',time:'16:46/16:49'},{station:'济南',time:'17:44/17:57'},{station:'泰山',time:'18:41/18:44'},{station:'兖州',time:'19:34/19:37'},{station:'徐州',time:'21:32/21:55'},{station:'商丘',time:'23:03/23:07'},{station:'开封',time:'00:12/00:15'},{station:'郑州',time:'00:54/01:00'},{station:'洛阳',time:'02:26/02:29'},{station:'西安',time:'06:58/07:10'},{station:'宝鸡',time:'08:38/08:48'},{station:'天水',time:'10:19/10:26'},{station:'陇西',time:'11:54/12:00'},{station:'兰州',time:'14:24/14:39'},{station:'西宁',time:'17:24 终到'}],
+    versions:[
+      {validFrom:'1975', validUntil:'2009-03-31', change:'原青岛—西宁K172/173次，隔日终到兰州/西宁，服役34年', adjustVersion:'早期开行'},
+      {validFrom:'2009-04-01', validUntil:'2015', change:'改为每日青岛—西宁间运行，车型升级，称为"西北高原一枝花"', adjustVersion:'2009 年调图'},
+      {validFrom:'2015', validUntil:null, change:'升级为直达特快Z272/273次，青岛北14:42始发、次日17:24终到西宁', adjustVersion:'2015 年升直达特快'}
+    ],
+    createdAt:'2026-08-17'
+  },
+  {
+    id:'T046', no:'02415', code:'K1351', model:'快速',
+    from:'连云港东', to:'乌鲁木齐', depart:'16:01', arrive:'第3日 14:30',
+    duration:'46h 29min', trainType:'25G 空调快速',
+    formation:'硬座/硬卧/软卧/餐车', maxSpeed:'120', operator:'中国铁路济南局集团',
+    validFrom:'1996', validUntil:null, adjustVersion:'现行图定',
+    desc:'纵贯陇海—兰新两大干线的东疆直通快速列车，连云港东16:01始发、第3日14:30终到乌鲁木齐，全程约3699公里，是中国运行里程最长的旅客列车之一，串联连云港、徐州、郑州、西安、兰州、嘉峪关、哈密、吐鲁番等城市。',
+    stops:[{station:'连云港东',time:'16:01 始发'},{station:'连云港',time:'16:29/16:36'},{station:'新沂',time:'17:36/17:40'},{station:'邳州',time:'18:05/18:08'},{station:'徐州',time:'19:05/19:20'},{station:'商丘',time:'21:39/21:45'},{station:'开封',time:'23:09/23:13'},{station:'郑州',time:'23:59/00:11'},{station:'洛阳',time:'01:44/01:49'},{station:'西安',time:'06:50/07:08'},{station:'宝鸡',time:'08:55/09:59'},{station:'天水',time:'11:37/11:43'},{station:'陇西',time:'13:15/13:18'},{station:'兰州',time:'15:41/15:56'},{station:'武威',time:'19:57/20:03'},{station:'金昌',time:'20:46/20:52'},{station:'张掖',time:'23:02/23:08'},{station:'嘉峪关',time:'02:02/02:10'},{station:'哈密',time:'08:43/08:49'},{station:'鄯善',time:'11:15/11:21'},{station:'吐鲁番',time:'12:44/12:48'},{station:'乌鲁木齐',time:'14:30 终到'}],
+    versions:[
+      {validFrom:'1996', validUntil:null, change:'连云港东—乌鲁木齐快速列车，纵贯陇海、兰新两大干线，是东海之滨直达天山南北的长途列车', adjustVersion:'1995/96 调图'}
+    ],
+    createdAt:'2026-08-17'
+  }
+];
+
+/* 车次↔线路 多对多映射：一个车次可跨多条线路，按运行顺序排列 */
+const SEED_TRAIN_LINES = [
+  {trainId:'T001', lineId:'L007', order:1},
+  {trainId:'T003', lineId:'L002', order:1},
+  {trainId:'T004', lineId:'L007', order:1},
+  {trainId:'T005', lineId:'L003', order:1},
+  {trainId:'T006', lineId:'L002', order:1},
+  {trainId:'T007', lineId:'L003', order:1},
+  {trainId:'T008', lineId:'L003', order:1},
+  /* T009 Z21 跨三条线路，体现多对多 */
+  {trainId:'T009', lineId:'L003', order:1},
+  {trainId:'T009', lineId:'L004', order:2},
+  {trainId:'T009', lineId:'L001', order:3},
+  {trainId:'T010', lineId:'L007', order:1},
+  {trainId:'T011', lineId:'L007', order:1},
+  {trainId:'T012', lineId:'L002', order:1},
+  {trainId:'T013', lineId:'L003', order:1},
+  {trainId:'T014', lineId:'L003', order:1},
+  {trainId:'T015', lineId:'L003', order:1},
+  {trainId:'T016', lineId:'L003', order:1},
+  /* T017 Z164 跨京沪、陇海、青藏三条线，体现多对多 */
+  {trainId:'T017', lineId:'L002', order:1},
+  {trainId:'T017', lineId:'L004', order:2},
+  {trainId:'T017', lineId:'L001', order:3},
+  {trainId:'T018', lineId:'L007', order:1},
+  {trainId:'T019', lineId:'L007', order:1},
+  {trainId:'T020', lineId:'L007', order:1},
+  {trainId:'T021', lineId:'L007', order:1},
+  {trainId:'T022', lineId:'L007', order:1},
+  {trainId:'T023', lineId:'L007', order:1},
+  {trainId:'T024', lineId:'L007', order:1},
+  {trainId:'T025', lineId:'L003', order:1},
+  {trainId:'T026', lineId:'L003', order:1},
+  {trainId:'T027', lineId:'L003', order:1},
+  {trainId:'T028', lineId:'L003', order:1},
+  {trainId:'T029', lineId:'L003', order:1},
+  {trainId:'T030', lineId:'L003', order:1},
+  {trainId:'T031', lineId:'L003', order:1},
+  {trainId:'T032', lineId:'L003', order:1},
+  {trainId:'T033', lineId:'L007', order:1},
+  {trainId:'T034', lineId:'L007', order:1},
+  {trainId:'T035', lineId:'L007', order:1},
+  {trainId:'T036', lineId:'L007', order:1},
+  {trainId:'T037', lineId:'L007', order:1},
+  {trainId:'T038', lineId:'L007', order:1},
+  {trainId:'T039', lineId:'L003', order:1},
+  {trainId:'T040', lineId:'L003', order:1},
+  {trainId:'T041', lineId:'L003', order:1},
+  /* T042 Z69 兰新铁路标杆直达特快 */
+  {trainId:'T042', lineId:'L005', order:1},
+  /* T043 K145 成昆铁路干线快速 */
+  {trainId:'T043', lineId:'L006', order:1},
+  /* T044 5619 成昆铁路公益慢火车 */
+  {trainId:'T044', lineId:'L006', order:1},
+  /* T045 Z273 跨胶济、京沪、陇海、兰青，陇海段为主要干线 */
+  {trainId:'T045', lineId:'L004', order:1},
+  /* T046 K1351 跨陇海、兰新两大干线 */
+  {trainId:'T046', lineId:'L004', order:1},
+  {trainId:'T046', lineId:'L005', order:2}
+];
+
+const LINE_TEMPLATES = [
+  {
+    name:'沪苏湖高铁',
+    latin:'Shanghai-Suzhou-Huzhou HSR',
+    from:'上海虹桥', to:'湖州',
+    length:163.8, opened:'2024-12-26',
+    electrified:'是', double:'是', grade:'高速铁路',
+    voltage:'25kV 50Hz', maxSpeed:'350',
+    stations:'上海虹桥·上海松江·苏州南·湖州',
+    desc:'长三角生态绿色一体化发展示范区的重要交通基础设施，设计时速350公里，串联上海、苏州、湖州三地，2024年12月开通运营。注：原松江南站已于2024年5月22日更名为上海松江站。',
+    timeline:[
+      {date:'2020-06-05',text:'正式开工建设'},
+      {date:'2024-12-26',text:'全线开通运营'}
+    ]
+  },
+  {
+    name:'川藏铁路',
+    latin:'Sichuan-Tibet Railway',
+    from:'成都', to:'拉萨',
+    length:1838, opened:'在建(雅林段)',
+    electrified:'是', double:'部分复线', grade:'国铁Ⅰ级',
+    voltage:'25kV', maxSpeed:'200',
+    stations:'成都·雅安·康定·林芝·拉萨',
+    desc:'世纪性战略工程，穿越横断山脉与青藏高原过渡带，桥隧比超过80%。建成后成都至拉萨旅行时间将从36小时缩短至13小时。',
+    timeline:[
+      {date:'2014',text:'成雅段开工建设'},
+      {date:'2018-12',text:'成雅段开通运营'},
+      {date:'2020-11',text:'雅林段开工建设'}
+    ]
+  },
+  {
+    name:'哈大高铁',
+    latin:'Harbin-Dalian HSR',
+    from:'哈尔滨西', to:'大连北',
+    length:921, opened:'2012-12-01',
+    electrified:'是', double:'是', grade:'高速铁路',
+    voltage:'25kV 50Hz', maxSpeed:'350',
+    stations:'哈尔滨西·长春西·沈阳北·大连北',
+    desc:'世界首条投入运营的高寒高铁，纵贯东北三省，攻克了-40℃严寒环境下高铁运行的世界级难题。',
+    timeline:[
+      {date:'2007-08-23',text:'开工建设'},
+      {date:'2012-12-01',text:'开通运营'},
+    ]
+  }
+];
+
+const TRAIN_TEMPLATES = [
+  {
+    code:'G99', model:'高铁',
+    from:'上海虹桥', to:'昆明南',
+    depart:'08:00', arrive:'19:30', duration:'11h 30min',
+    maxSpeed:'350', trainType:'CR400AF 复兴号',
+    adjustVersion:'2024Q1 调图', validFrom:'2016-12-28', validUntil:null,
+    lineIds:[],
+    formation:'8辆编组(4M4T)', operator:'中国铁路上海局',
+    desc:'沪昆高铁标杆列车，从东海之滨到云贵高原，纵贯东西近2000公里。沪昆高铁未入档，可后续补录线路。',
+    stops:[
+      {station:'上海虹桥',time:'08:00'},
+      {station:'杭州东',time:'08:45'},
+      {station:'长沙南',time:'12:00'},
+      {station:'贵阳北',time:'15:30'},
+      {station:'昆明南',time:'19:30'}
+    ]
+  },
+  {
+    code:'Z21', model:'直达特快',
+    from:'北京西', to:'拉萨',
+    depart:'20:00', arrive:'第3日 12:20', duration:'40h 20min',
+    maxSpeed:'160', trainType:'25T 客车',
+    adjustVersion:'2024Q1 调图', validFrom:'2006-07-01', validUntil:null,
+    lineIds:['L003','L004','L001'],
+    formation:'硬卧/软卧/餐车', operator:'中国铁路青藏集团',
+    desc:'北京至拉萨直达特快，跨京广、陇海、青藏三条干线，纵贯半个中国。格尔木至拉萨段全程供氧，是进藏明星列车。',
+    stops:[
+      {station:'北京西',time:'20:00'},
+      {station:'西安',time:'次日 06:30'},
+      {station:'兰州',time:'次日 13:00'},
+      {station:'格尔木',time:'第3日 02:00'},
+      {station:'拉萨',time:'第3日 12:20'}
+    ]
+  },
+  {
+    code:'Z164', model:'直达特快',
+    from:'上海', to:'拉萨',
+    depart:'19:33', arrive:'第3日 18:46', duration:'47h 13min',
+    maxSpeed:'160', trainType:'25T 客车',
+    adjustVersion:'2024Q1 调图', validFrom:'2006-10-01', validUntil:null,
+    lineIds:['L002','L004','L001'],
+    formation:'硬卧/软卧/餐车', operator:'中国铁路青藏集团',
+    desc:'上海至拉萨直达特快，全程4373公里，是中国运行里程最长的旅客列车之一。跨京沪、陇海、青藏三条干线。',
+    stops:[
+      {station:'上海',time:'19:33'},
+      {station:'郑州',time:'次日 08:00'},
+      {station:'兰州',time:'次日 18:00'},
+      {station:'拉萨',time:'第3日 18:46'}
+    ]
+  }
+];
+
+/* ============================================================
+   待开通车站专题 · UPCOMING_STATIONS
+   收录在建/拟建、尚未正式办客的核心车站（尽量全面）。
+   字段：name 车站名 / city 所在城市 / line 所属线路 / ltype 线路制式
+         status 建设状态 / open 预计开通（'YYYY-MM-DD' 或 'YYYY-MM' 或 'YYYY'）
+         scale 站场规模(可选) / note 备注(可选)
+   说明：开通时间以官方工程节点/批复口径为准，仅为工程预期，以铁路部门
+         最终发布的开通公告为准。已通车车站不收录于此。
+   ============================================================ */
+const UPCOMING_STATIONS = [
+  /* —— 2026 年内（倒计时）—— */
+  {name:'雄安站(雄商引入)',city:'河北雄安',line:'京港高铁雄商段',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'与既有雄安站衔接，京港高铁北段收尾。'},
+  {name:'临清东',city:'山东聊城',line:'京港高铁雄商段',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'2台4线',note:'鲁西首次接入 350km/h 高铁。'},
+  {name:'聊城西',city:'山东聊城',line:'京港高铁雄商段',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'与济郑高铁换乘枢纽。'},
+  {name:'菏泽东',city:'山东菏泽',line:'京港高铁雄商段',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'与鲁南高铁互联。'},
+  {name:'德州东改造',city:'山东德州',line:'京沪高铁',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'雄商引入需扩建改造。'},
+  {name:'济阳',city:'山东济南',line:'济滨高铁',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'2台4线',note:'济南以北首站。'},
+  {name:'商河',city:'山东济南',line:'济滨高铁',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'2台4线',note:'济南都市圈向北延伸。'},
+  {name:'惠民',city:'山东滨州',line:'济滨高铁',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'2台4线',note:'滨州接入全国高铁网。'},
+  {name:'滨州',city:'山东滨州',line:'济滨高铁',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'滨州首次通高铁。'},
+  {name:'牛背梁',city:'陕西商洛',line:'西康高铁（西渝北段）',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'秦岭山区越岭站。'},
+  {name:'柞水西',city:'陕西商洛',line:'西康高铁（西渝北段）',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'柞水首次通高铁。'},
+  {name:'镇安西',city:'陕西商洛',line:'西康高铁（西渝北段）',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'镇安首次通高铁。'},
+  {name:'桐木',city:'陕西安康',line:'西康高铁（西渝北段）',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'安康西进站前站。'},
+  {name:'安康西',city:'陕西安康',line:'西康高铁（西渝北段）',ltype:'高铁',status:'联调联试',open:'2026-09',scale:'',note:'安康枢纽西站。'},
+  {name:'含山',city:'安徽马鞍山',line:'巢马城际铁路',ltype:'城际',status:'联调联试',open:'2026-09',scale:'2台4线',note:'含山结束无高铁历史。'},
+  {name:'郑蒲港',city:'安徽马鞍山',line:'巢马城际铁路',ltype:'城际',status:'联调联试',open:'2026-09',scale:'2台4线',note:'依长江港口而设。'},
+  {name:'呼兰北',city:'黑龙江哈尔滨',line:'哈伊高铁',ltype:'高铁',status:'联调联试',open:'2026-10',scale:'',note:'出哈枢纽首站。'},
+  {name:'绥化南',city:'黑龙江绥化',line:'哈伊高铁',ltype:'高铁',status:'联调联试',open:'2026-10',scale:'',note:'绥化首次通高铁。'},
+  {name:'庆安南',city:'黑龙江绥化',line:'哈伊高铁',ltype:'高铁',status:'联调联试',open:'2026-10',scale:'',note:'庆安首次通高铁。'},
+  {name:'日月峡',city:'黑龙江伊春',line:'哈伊高铁',ltype:'高铁',status:'联调联试',open:'2026-10',scale:'',note:'临近林区景区。'},
+  {name:'伊春西',city:'黑龙江伊春',line:'哈伊高铁',ltype:'高铁',status:'联调联试',open:'2026-10',scale:'',note:'伊春首次通高铁，本线终点。'},
+  {name:'淮北西',city:'安徽淮北',line:'阜宿淮/淮宿蚌城际',ltype:'城际',status:'联调联试',open:'2026-10',scale:'',note:'皖北枢纽新站。'},
+  {name:'宿州西',city:'安徽宿州',line:'阜宿淮/淮宿蚌城际',ltype:'城际',status:'联调联试',open:'2026-10',scale:'',note:'宿州西侧新客站。'},
+  {name:'蒙城西',city:'安徽亳州',line:'阜宿淮城际',ltype:'城际',status:'联调联试',open:'2026-10',scale:'2台4线',note:'蒙城首次通高铁。'},
+  {name:'利辛',city:'安徽亳州',line:'阜宿淮城际',ltype:'城际',status:'联调联试',open:'2026-10',scale:'2台4线',note:'利辛首次通高铁。'},
+  {name:'双堆集',city:'安徽淮北',line:'淮宿蚌城际',ltype:'城际',status:'联调联试',open:'2026-10',scale:'',note:'以淮海战役双堆集战场命名。'},
+  {name:'固镇南',city:'安徽蚌埠',line:'淮宿蚌城际',ltype:'城际',status:'联调联试',open:'2026-10',scale:'',note:'固镇首次通高铁。'},
+  {name:'象州',city:'广西来宾',line:'柳梧铁路',ltype:'客货共线',status:'铺轨',open:'2026',scale:'',note:'柳州—梧州客货通道。'},
+  {name:'藤县北',city:'广西梧州',line:'柳梧铁路',ltype:'客货共线',status:'铺轨',open:'2026',scale:'',note:'藤县接入广西内河通道。'},
+  {name:'武宣',city:'广西来宾',line:'柳梧铁路',ltype:'客货共线',status:'铺轨',open:'2026',scale:'',note:'柳梧铁路中间站。'},
+  {name:'岑溪东',city:'广西梧州',line:'南珠高铁玉岑段',ltype:'高铁',status:'联调联试',open:'2026-12',scale:'',note:'南深高铁组成部分。'},
+  {name:'筠连',city:'四川宜宾',line:'渝昆高铁川滇段',ltype:'高铁',status:'铺轨',open:'2026',scale:'',note:'川滇节点县首次通高铁。'},
+  {name:'盐津南',city:'云南昭通',line:'渝昆高铁川滇段',ltype:'高铁',status:'铺轨',open:'2026',scale:'',note:'峡谷地带山地站。'},
+  {name:'昭通东',city:'云南昭通',line:'渝昆高铁川滇段',ltype:'高铁',status:'铺轨',open:'2026',scale:'',note:'昭通首次通高铁。'},
+  {name:'会泽',city:'云南曲靖',line:'渝昆高铁川滇段',ltype:'高铁',status:'铺轨',open:'2026',scale:'',note:'会泽首次通高铁。'},
+  {name:'长水机场',city:'云南昆明',line:'渝昆高铁',ltype:'高铁',status:'铺轨',open:'2026',scale:'',note:'空铁联运枢纽站。'},
+
+  /* —— 2027 上半年（一年内置顶区）—— */
+  {name:'上海东站',city:'上海',line:'沪苏通铁路二期/东方枢纽',ltype:'综合枢纽',status:'在建',open:'2027-07-01',scale:'15台30线',note:'上海"四大主站"之一，联调联试已启动，与虹桥构成"西虹桥、东东方"格局。'},
+  {name:'宝山站',city:'上海',line:'沪渝蓉高铁/沪通二期',ltype:'综合枢纽',status:'在建',open:'2027-07-01',scale:'8台18线',note:'沪渝蓉起点站，与上海东站同步投运。'},
+  {name:'徐行站',city:'上海嘉定',line:'沪苏通铁路二期',ltype:'客货共线',status:'在建',open:'2027',scale:'2台4线',note:'嘉定东北部首座铁路车站，2026年7月结构封顶。'},
+  {name:'四团站',city:'上海奉贤',line:'沪苏通铁路二期',ltype:'客货共线',status:'在建',open:'2027',scale:'',note:'沪通二期南端枢纽。'},
+  {name:'外高桥站',city:'上海浦东',line:'沪苏通铁路二期',ltype:'客货共线',status:'在建',open:'2027',scale:'',note:'临港产业配套站。'},
+  {name:'南京北站',city:'江苏南京',line:'宁淮城际/北站枢纽',ltype:'综合枢纽',status:'在建',open:'2027',scale:'',note:'南京第二座高铁主客站，江北枢纽。'},
+  {name:'洪泽',city:'江苏淮安',line:'宁淮城际铁路',ltype:'城际',status:'在建',open:'2027',scale:'',note:'淮安至南京 1 小时通达。'},
+  {name:'金湖',city:'江苏淮安',line:'宁淮城际铁路',ltype:'城际',status:'在建',open:'2027',scale:'',note:'金湖首次通高铁。'},
+  {name:'天长',city:'安徽滁州',line:'宁淮城际铁路',ltype:'城际',status:'在建',open:'2027',scale:'',note:'安徽天长接入长三角轨道网。'},
+  {name:'六合西',city:'江苏南京',line:'宁淮城际/沪渝蓉',ltype:'城际',status:'在建',open:'2027',scale:'',note:'南京江北重要中间站。'},
+  {name:'常熟西',city:'江苏苏州',line:'通苏嘉甬高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'沿海通道沿海段。'},
+  {name:'辛庄',city:'江苏苏州',line:'通苏嘉甬高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'沪苏交界中间站。'},
+  {name:'盛泽',city:'江苏苏州',line:'通苏嘉甬高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'纺织之都首次通高铁。'},
+  {name:'嘉兴北',city:'浙江嘉兴',line:'通苏嘉甬高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'嘉兴北部新客站。'},
+  {name:'海盐西',city:'浙江嘉兴',line:'通苏嘉甬高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'海盐首次通高铁。'},
+  {name:'慈溪',city:'浙江宁波',line:'通苏嘉甬高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'杭州湾跨海高铁，沿海通道关键站。'},
+  {name:'重庆科学城',city:'重庆',line:'成渝中线高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'西部（重庆）科学城节点。'},
+  {name:'铜梁',city:'重庆',line:'成渝中线高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'龙舞之乡首次通350高铁。'},
+  {name:'大足石刻',city:'重庆',line:'成渝中线高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'以世界文化遗产大足石刻命名。'},
+  {name:'安岳',city:'四川资阳',line:'成渝中线高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'川渝中部节点。'},
+  {name:'乐至',city:'四川资阳',line:'成渝中线高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'乐至首次通高铁。'},
+  {name:'简州',city:'四川成都',line:'成渝中线高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'成都东部新区唯一新设站。'},
+  {name:'成都北(改造)',city:'四川成都',line:'成渝中线',ltype:'综合枢纽',status:'改造',open:'2027',scale:'10台18线',note:'老站封闭改造归来，成渝中线始发终到。'},
+  {name:'天府站南场',city:'四川成都',line:'成自宜/成达万/川藏',ltype:'综合枢纽',status:'在建',open:'2027-03',scale:'12台22线',note:'四川最大高铁站，先接成自宜、成达万、川藏方向。'},
+  {name:'南充北',city:'四川南充',line:'成达万高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'兰渝线与成达万换乘。'},
+  {name:'达州南',city:'四川达州',line:'成达万高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'川东枢纽，对接襄渝线。'},
+  {name:'开江',city:'四川达州',line:'成达万高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'开江首次通高铁。'},
+  {name:'唐县',city:'河北保定',line:'雄忻高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'保定西部山区县。'},
+  {name:'曲阳',city:'河北保定',line:'雄忻高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'曲阳首次通高铁。'},
+  {name:'阜平',city:'河北保定',line:'雄忻高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'老区首次通高铁。'},
+  {name:'五台山',city:'山西忻州',line:'雄忻高铁',ltype:'高铁',status:'在建',open:'2027',scale:'2台4线',note:'旅游车站，直抵五台山景区。'},
+  {name:'定襄',city:'山西忻州',line:'雄忻高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'定襄首次通高铁。'},
+  {name:'忻州西',city:'山西忻州',line:'雄忻高铁/大西高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'雄忻与大西通道接入点。'},
+  {name:'邵阳县',city:'湖南邵阳',line:'邵永高铁',ltype:'高铁',status:'在建',open:'2027',scale:'',note:'呼南通道湖南段南延。'},
+  {name:'安远',city:'江西赣州',line:'瑞梅铁路',ltype:'客货共线',status:'在建',open:'2027',scale:'',note:'赣南山区首条普速新通道。'},
+
+  /* —— 2028 —— */
+  {name:'铜仁北',city:'贵州铜仁',line:'铜吉高铁',ltype:'高铁',status:'在建',open:'2028',scale:'',note:'沪昆与张吉怀联络线。'},
+  {name:'城口',city:'重庆',line:'西渝高铁康渝段',ltype:'高铁',status:'在建',open:'2028',scale:'',note:'大巴山腹地，城口首次通高铁。'},
+  {name:'开州',city:'重庆',line:'西渝高铁康渝段',ltype:'高铁',status:'在建',open:'2028',scale:'',note:'渝东北首条350高铁。'},
+  {name:'渠县北',city:'四川达州',line:'西渝高铁康渝段',ltype:'高铁',status:'在建',open:'2028',scale:'',note:'川东北中间站。'},
+
+  /* —— 2029 —— */
+  {name:'崇明',city:'上海',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'崇明首次通高铁，高铁过江不减速。'},
+  {name:'启东西',city:'江苏南通',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'启东首次通高铁。'},
+  {name:'海门北',city:'江苏南通',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'海门首次通高铁。'},
+  {name:'泰州南',city:'江苏泰州',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'泰州首次通高铁，全线最大新建站之一。'},
+  {name:'如皋西',city:'江苏南通',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'如皋西侧新客站。'},
+  {name:'仪征北',city:'江苏扬州',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'扬州西向中间站。'},
+  {name:'六合南',city:'江苏南京',line:'沪渝蓉沿江高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'江北东部中间站。'},
+  {name:'奉贤',city:'上海',line:'沪杭高铁（沪乍杭）',ltype:'高铁',status:'拟建',open:'2029',scale:'',note:'沪杭间第二条高铁新建站。'},
+  {name:'上海金山',city:'上海',line:'沪杭高铁（沪乍杭）',ltype:'高铁',status:'拟建',open:'2029',scale:'',note:'金山北侧新客站。'},
+  {name:'平湖市',city:'浙江嘉兴',line:'沪杭高铁（沪乍杭）',ltype:'高铁',status:'拟建',open:'2029',scale:'',note:'平湖首次通高铁。'},
+  {name:'临平北',city:'浙江杭州',line:'沪杭高铁（沪乍杭）',ltype:'高铁',status:'拟建',open:'2029',scale:'',note:'杭州城北新客站。'},
+  {name:'澧县',city:'湖南常德',line:'宜常高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'呼南通道湘北段，澧县首次通高铁。'},
+  {name:'临澧东',city:'湖南常德',line:'宜常高铁',ltype:'高铁',status:'在建',open:'2029',scale:'',note:'临澧首次通高铁。'},
+
+  /* —— 2030 及以后（远期）—— */
+  {name:'康定',city:'四川甘孜',line:'川藏铁路（雅安—林芝段）',ltype:'客货共线',status:'在建',open:'2030',scale:'',note:'川藏铁路进藏首座地级市站，穿越横断山脉。'},
+  {name:'昌都',city:'西藏昌都',line:'川藏铁路（雅安—林芝段）',ltype:'客货共线',status:'在建',open:'2030',scale:'',note:'世界海拔最高铁路通道，川藏线中间大站。'},
+  {name:'波密',city:'西藏林芝',line:'川藏铁路（雅安—林芝段）',ltype:'客货共线',status:'在建',open:'2030',scale:'',note:'藏东林区站。'},
+  {name:'黄花机场',city:'湖南长沙',line:'长赣高铁',ltype:'高铁',status:'在建',open:'2030',scale:'',note:'长沙黄花机场空铁零换乘。'},
+  {name:'浏阳北',city:'湖南长沙',line:'长赣高铁',ltype:'高铁',status:'在建',open:'2030',scale:'',note:'浏阳首次通高铁，全高架站。'},
+  {name:'花垣',city:'湖南湘西',line:'黔吉高铁',ltype:'高铁',status:'拟建',open:'2031',scale:'',note:'渝厦通道西延，2026年内开工。'},
+  {name:'保靖',city:'湖南湘西',line:'黔吉高铁',ltype:'高铁',status:'拟建',open:'2031',scale:'',note:'保靖首次通高铁。'},
+  {name:'贵阳北扩能',city:'贵州贵阳',line:'黔吉高铁',ltype:'高铁',status:'拟建',open:'2031',scale:'',note:'渝桂黔通道接入节点。'}
+];
+
+/* ============================================================
+   待开通线路 · UPCOMING_LINES
+   在建/拟建铁路线路专题，与「待开通车站」为多对多关系：
+     - 每条线路的 stations 列出其途经的在建车站（收录自 UPCOMING_STATIONS）
+     - 一个车站可同时属于多条线路（如上海东站属沪苏通二期/东方枢纽）
+   字段：
+     name 线名 / from-to 起止 / ltype 等级 / speed 设计时速(km/h)
+     length 里程(km) / status 建设状态 / open 预计全线开通（年月）
+     corridor 所属通道(可选) / note 说明 / stations 关联在建车站数组
+   说明：里程/开通时间以工程批复口径为准，为工程预期，以铁路部门
+         最终发布开通公告为准。已开通线路不收录于此。
+   ============================================================ */
+const UPCOMING_LINES = [
+  /* —— 2026（倒计时）—— */
+  {name:'京港高铁雄商段',from:'雄安',to:'商丘',ltype:'高速铁路',speed:'350',length:'552',status:'联调联试',open:'2026-09',corridor:'京港澳通道',note:'京港高铁北段收尾段，京港主通道即将全线贯通。',stations:['雄安站(雄商引入)','临清东','聊城西','菏泽东']},
+  {name:'济滨高铁',from:'济南',to:'滨州',ltype:'高速铁路',speed:'350',length:'150',status:'联调联试',open:'2026-09',corridor:'济南都市圈城际',note:'济南向北延伸，滨州首次接入全国高铁网。',stations:['济阳','商河','惠民','滨州']},
+  {name:'巢马城际铁路',from:'巢湖',to:'马鞍山',ltype:'城际铁路',speed:'350',length:'73',status:'联调联试',open:'2026-09',corridor:'长三角城际',note:'跨巢湖长江段，含山告别无高铁。',stations:['含山','郑蒲港']},
+  {name:'西康高铁（西渝北段）',from:'西安',to:'安康',ltype:'高速铁路',speed:'350',length:'171',status:'联调联试',open:'2026-09',corridor:'西渝通道',note:'穿越秦岭越岭段，柞水/镇安首通高铁。',stations:['牛背梁','柞水西','镇安西','桐木','安康西']},
+  {name:'哈伊高铁',from:'哈尔滨',to:'伊春',ltype:'高速铁路',speed:'250',length:'300',status:'联调联试',open:'2026-10',corridor:'沿边铁路',note:'龙江最北高铁，伊春首通高铁。',stations:['呼兰北','绥化南','庆安南','日月峡','伊春西']},
+  {name:'淮宿蚌城际铁路',from:'淮北',to:'蚌埠',ltype:'城际铁路',speed:'350',length:'163',status:'联调联试',open:'2026-10',corridor:'皖北城际',note:'淮宿蚌+阜宿淮构成皖北城际网，固镇/蒙城首通高铁。',stations:['淮北西','宿州西','双堆集','固镇南']},
+  {name:'阜宿淮城际铁路',from:'阜阳',to:'淮北',ltype:'城际铁路',speed:'350',length:'140',status:'联调联试',open:'2026-10',corridor:'皖北城际',note:'蒙城/利辛首次接入高铁网，与淮宿蚌共构成皖北环线。',stations:['淮北西','宿州西','蒙城西','利辛']},
+  {name:'柳梧铁路',from:'柳州',to:'梧州',ltype:'客货共线',speed:'160',length:'237',status:'铺轨',open:'2026',corridor:'西部陆海新通道',note:'衔接柳州与梧州港口的客货共线普速通道。',stations:['象州','藤县北','武宣']},
+  {name:'渝昆高铁川滇段',from:'重庆',to:'昆明',ltype:'高速铁路',speed:'350',length:'520',status:'铺轨',open:'2026',corridor:'京昆通道',note:'川滇段收官，渝昆全线贯通在即。',stations:['筠连','盐津南','昭通东','会泽','长水机场']},
+  {name:'南珠高铁玉岑段',from:'玉林',to:'岑溪',ltype:'高速铁路',speed:'350',length:'110',status:'联调联试',open:'2026-12',corridor:'南深通道',note:'南深高铁（南宁—深圳）组成部分，粤桂直通。',stations:['岑溪东']},
+
+  /* —— 2027 —— */
+  {name:'沪苏通铁路二期',from:'沪通',to:'浦东',ltype:'客货共线',speed:'200',length:'111',status:'在建',open:'2027-07',corridor:'沿江/浦东枢纽',note:'衔接上海东站、宝山站的浦东对外铁路廊道。',stations:['上海东站','宝山站','徐行站','四团站','外高桥站']},
+  {name:'宁淮城际铁路',from:'南京',to:'淮安',ltype:'城际铁路',speed:'350',length:'200',status:'在建',open:'2027',corridor:'长三角城际',note:'南京江北首条高铁客专，洪泽/金湖/天长首通高铁。',stations:['南京北站','洪泽','金湖','天长','六合西']},
+  {name:'通苏嘉甬高铁',from:'南通',to:'宁波',ltype:'高速铁路',speed:'350',length:'310',status:'在建',open:'2027',corridor:'沿海通道',note:'沪苏通—杭甬联络，含杭州湾海上高铁大桥。',stations:['常熟西','辛庄','盛泽','嘉兴北','海盐西','慈溪']},
+  {name:'成渝中线高铁',from:'成都',to:'重庆',ltype:'高速铁路',speed:'350',length:'292',status:'在建',open:'2027',corridor:'成渝双城经济圈',note:'成渝间控制时速350直达，穿越龙泉山隧道群。',stations:['重庆科学城','铜梁','大足石刻','安岳','乐至','简州','成都北(改造)']},
+  {name:'成达万高铁',from:'成都',to:'达州',ltype:'高速铁路',speed:'350',length:'487',status:'在建',open:'2027',corridor:'沿江高铁（沪蓉）',note:'川东北出川新通道，开江/渠县首通高铁。',stations:['南充北','达州南','开江','天府站南场']},
+  {name:'雄忻高铁',from:'雄安',to:'忻州',ltype:'高速铁路',speed:'350',length:'342',status:'在建',open:'2027',corridor:'京昆通道',note:'京雄西延，直抵五台山景区。',stations:['唐县','曲阳','阜平','五台山','定襄','忻州西']},
+  {name:'西渝高铁康渝段',from:'安康',to:'重庆',ltype:'高速铁路',speed:'350',length:'479',status:'在建',open:'2028',corridor:'西渝通道',note:'穿越大巴山腹地，城口/开州首通高铁。',stations:['城口','开州','渠县北']},
+  {name:'邵永高铁',from:'邵阳',to:'永州',ltype:'高速铁路',speed:'350',length:'99',status:'在建',open:'2027',corridor:'呼南通道',note:'呼南通道湘南段，邵阳县接入高铁网。',stations:['邵阳县']},
+  {name:'瑞梅铁路',from:'瑞金',to:'梅州',ltype:'客货共线',speed:'160',length:'239',status:'在建',open:'2027',corridor:'赣粤通道',note:'赣南山区首条普速客货新通道，安远比邻。',stations:['安远']},
+  {name:'铜吉高铁',from:'铜仁',to:'吉首',ltype:'高速铁路',speed:'350',length:'100',status:'在建',open:'2028',corridor:'沪昆—张吉怀联络',note:'串联武陵山区，衔接张吉怀高铁。',stations:['铜仁北']},
+
+  /* —— 2029 及以后（远期）—— */
+  {name:'沪渝蓉沿江高铁（北沿江）',from:'上海',to:'成都',ltype:'高速铁路',speed:'350',length:'2100',status:'在建',open:'2029',corridor:'沿江高铁',note:'长江北岸走廊，泰州/崇明/启东/海门首通高铁。',stations:['崇明','启东西','海门北','泰州南','如皋西','仪征北','六合南','宝山站']},
+  {name:'沪乍杭高铁',from:'上海',to:'杭州',ltype:'高速铁路',speed:'350',length:'200',status:'拟建',open:'2029',corridor:'沪杭通道',note:'沪杭间第二条高铁，金山/平湖/临平首通。',stations:['奉贤','上海金山','平湖市','临平北']},
+  {name:'宜常高铁',from:'宜昌',to:'常德',ltype:'高速铁路',speed:'350',length:'234',status:'在建',open:'2029',corridor:'呼南通道',note:'呼南通道湘北段，澧县/临澧首通高铁。',stations:['澧县','临澧东']},
+  {name:'川藏铁路（雅安—林芝段）',from:'雅安',to:'林芝',ltype:'客货共线',speed:'160',length:'1011',status:'在建',open:'2030',corridor:'川藏通道',note:'世界工程难度之最，穿越横断山脉，康定/昌都/波密等站。',stations:['康定','昌都','波密','天府站南场']},
+  {name:'长赣高铁',from:'长沙',to:'赣州',ltype:'高速铁路',speed:'350',length:'430',status:'在建',open:'2030',corridor:'渝厦通道',note:'长沙黄花机场空铁零换乘。',stations:['黄花机场','浏阳北']},
+  {name:'黔吉高铁',from:'黔江',to:'吉首',ltype:'高速铁路',speed:'350',length:'112',status:'拟建',open:'2031',corridor:'渝厦通道',note:'渝厦通道西延，2026年内开工。',stations:['花垣','保靖','贵阳北扩能']}
+];
+
+/* 待开通线路 → 车站 多对多反查索引（运行时按 UPCOMING_LINES 构建） */
+function upcomingLinesOfStation(stationName){
+  const lines=[];
+  UPCOMING_LINES.forEach(l=>{
+    if((l.stations||[]).includes(stationName) || (UPCOMING_STATIONS.find(s=>s.name===stationName)||{}).line===l.name) lines.push(l);
+  });
+  return lines;
+}
+
+/* ============================================================
+   国际/跨境架构预留 · GLOBAL_SCOPE
+   为未来"全球火车档案"预留结构：当前仅启用中国跨境标注，
+   不渲染单独的全球专题页（用户要求"只预留结构+标注中国跨境"）。
+   scope 取值：domestic 国内 / cross-border 中国跨境 / international 境外站
+   ============================================================ */
+const GLOBAL_SCOPE = {
+  label:'全球火车档案',
+  enabled:false,                 /* 预留：未来切换 true 即启用全球视图 */
+  country:'CN',                  /* 预留：当前档案主国 */
+  record:{
+    domestic:true,               /* 国内线路/列车/车站 */
+    crossBorder:true,            /* 中国跨境列车过境站（K3/K23/K27/K19/Z5 等） */
+    foreign:true                 /* 境外站（仅接线，不建档案主体） */
+  },
+  corridors:{                     /* 中国跨境走廊（现状概览，供标注用） */
+    '中蒙俄铁路走廊':{border:['二连浩特','满洲里'],trains:['K3','K23','K19'],note:'经二连出境走纵贯蒙古通道；经满洲里转向后贝加尔东线。'},
+    '中朝铁路走廊':{border:['丹东'],trains:['K27'],note:'经鸭绿江大桥入境朝鲜新义州。'},
+    '中越铁路走廊':{border:['凭祥','河口'],trains:['Z5'],note:'凭祥（湘桂线）与河口（滇越线）两口岸出入境。'}
+  }
+};
+
+const Store = {
+  load(){
+    try{
+      const raw = localStorage.getItem(STORE_KEY);
+      if(raw){ return JSON.parse(raw); }
+    }catch(e){}
+    const seed = { lines: SEED_LINES, trains: SEED_TRAINS, trainLines: SEED_TRAIN_LINES };
+    localStorage.setItem(STORE_KEY, JSON.stringify(seed));
+    return seed;
+  },
+  save(data){
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  },
+  reset(){
+    const seed = { lines: SEED_LINES, trains: SEED_TRAINS, trainLines: SEED_TRAIN_LINES };
+    localStorage.setItem(STORE_KEY, JSON.stringify(seed));
+    return seed;
+  }
+};
+
+let DB = Store.load();
+/* 兼容旧数据：没有 trainLines 字段时补空数组 */
+if(!DB.trainLines){ DB.trainLines = []; Store.save(DB); }
+/* 数据迁移：旧车次没有 validFrom/adjustVersion 时补默认值 */
+if(DB.trains && DB.trains.some(t=>!t.validFrom)){
+  DB.trains = DB.trains.map(t=>({
+    ...t,
+    validFrom: t.validFrom || '',
+    validUntil: t.validUntil || null,
+    adjustVersion: t.adjustVersion || ''
+  }));
+  Store.save(DB);
+}
+
+/* ---------- 关系与生命周期辅助 ---------- */
+/* 取车次经过的线路，按 order 排序 */
+function linesOfTrain(trainId){
+  return (DB.trainLines||[])
+    .filter(r=>r.trainId===trainId)
+    .sort((a,b)=>(a.order||0)-(b.order||0))
+    .map(r=>DB.lines.find(l=>l.id===r.lineId))
+    .filter(Boolean);
+}
+/* 取跑过某线路的所有车次 */
+function trainsOfLine(lineId){
+  const tids=(DB.trainLines||[]).filter(r=>r.lineId===lineId).map(r=>r.trainId);
+  return DB.trains.filter(t=>tids.includes(t.id));
+}
+/* 车次生命周期状态 */
+function trainStatus(t){
+  if(t.validUntil) return 'discontinued';
+  return 'active';
+}
+function statusLabel(t){
+  return trainStatus(t)==='discontinued' ? '已停运' : '现行';
+}
+
+/* ---------- 车站元数据（真实电报码/拼音/城市，源自 12306 station_name.js） ---------- */
+/* 说明：键为档案所用站名；值为 { t:电报码, p:全拼音, s:短码, i:序号, c:城市 } */
+/* 部分更名车站（如 甘洛→甘洛南）已做匹配；境外/停办小站/占位名如实留空，绝不编造 */
+const STATION_META = {"北京南":{t:"VNP",p:"beijingnan",s:"bjn",i:"3",c:"北京"},"沧州西":{t:"CBP",p:"cangzhouxi",s:"czx",i:"344",c:"沧州"},"德州东":{t:"DIP",p:"dezhoudong",s:"dzd",i:"418",c:"德州"},"曲阜东":{t:"QAK",p:"qufudong",s:"qfd",i:"1049",c:"济宁"},"南京南":{t:"NKH",p:"nanjingnan",s:"njn",i:"121",c:"南京"},"苏州北":{t:"OHH",p:"suzhoubei",s:"szb",i:"1204",c:"苏州"},"上海虹桥":{t:"AOH",p:"shanghaihongqiao",s:"shhq",i:"22",c:"上海"},"北京":{t:"BJP",p:"beijing",s:"bj",i:"2",c:"北京"},"二连浩特/扎门乌德":{scope:"cross-border",country:"蒙古",nt:"中蒙国际列车过境车站（中蒙双方口岸，K3/K23次），非国铁办客站，无国内电报码"},"乌兰巴托":{scope:"international",country:"蒙古",nt:"K3/K23次国际列车境外站（蒙古国首都），非国铁办客站，无国内电报码"},"伊尔库茨克":{scope:"international",country:"俄罗斯",nt:"K3/K19次国际列车境外站（俄罗斯），非国铁办客站，无国内电报码"},"莫斯科雅罗斯拉夫尔":{scope:"international",country:"俄罗斯",nt:"K3/K19次国际列车终点站（俄罗斯莫斯科），非国铁办客站，无国内电报码"},"南京":{t:"NJH",p:"nanjing",s:"nj",i:"120",c:"南京"},"杭州":{t:"HZH",p:"hangzhou",s:"hz",i:"88",c:"杭州"},"北京西":{t:"BXP",p:"beijingxi",s:"bjx",i:"5",c:"北京"},"涿州东":{t:"ZAP",p:"zhuozhoudong",s:"zzd",i:"1653",c:"保定"},"石家庄":{t:"SJP",p:"shijiazhuang",s:"sjz",i:"135",c:"石家庄"},"郑州东":{t:"ZAF",p:"zhengzhoudong",s:"zzd",i:"170",c:"郑州"},"广州北":{t:"GBQ",p:"guangzhoubei",s:"gzb",i:"64",c:"广州"},"广州":{t:"GZQ",p:"guangzhou",s:"gz",i:"66",c:"广州"},"广州新塘":{t:"XWQ",p:"guangzhouxintang",s:"gzxt",i:"68",c:"广州"},"东莞南":{t:"DNA",p:"dongguannan",s:"dgn",i:"359",c:"东莞"},"深圳北":{t:"IOQ",p:"shenzhenbei",s:"szb",i:"1203",c:"深圳"},"天津西":{t:"TXP",p:"tianjinxi",s:"tjx",i:"27",c:"天津"},"德州":{t:"DZP",p:"dezhou",s:"dz",i:"423",c:"德州"},"徐州":{t:"XCH",p:"xuzhou",s:"xz",i:"1453",c:"徐州"},"无锡":{t:"WXH",p:"wuxi",s:"wx",i:"1333",c:"无锡"},"苏州":{t:"SZH",p:"suzhou",s:"sz",i:"1215",c:"苏州"},"上海":{t:"SHH",p:"shanghai",s:"sh",i:"20",c:"上海"},"郑州":{t:"ZZF",p:"zhengzhou",s:"zz",i:"172",c:"郑州"},"武昌":{t:"WCN",p:"wuchang",s:"wc",i:"1289",c:"武汉"},"长沙":{t:"CSQ",p:"changsha",s:"cs",i:"43",c:"长沙"},"许昌东":{t:"XVF",p:"xuchangdong",s:"xcd",i:"1355",c:"许昌"},"漯河西":{t:"LBN",p:"luohexi",s:"lhx",i:"806",c:"漯河"},"驻马店西":{t:"ZLN",p:"zhumadianxi",s:"zmdx",i:"1622",c:"驻马店"},"信阳东":{t:"OYN",p:"xinyangdong",s:"xyd",i:"1438",c:"信阳"},"武汉":{t:"WHN",p:"wuhan",s:"wh",i:"147",c:"武汉"},"长沙南":{t:"CWQ",p:"changshanan",s:"csn",i:"44",c:"长沙"},"株洲西":{t:"ZAQ",p:"zhuzhouxi",s:"zzx",i:"1660",c:"株洲"},"衡阳东":{t:"HVQ",p:"hengyangdong",s:"hyd",i:"632",c:"衡阳"},"韶关":{t:"SNQ",p:"shaoguan",s:"sg",i:"1111",c:"韶关"},"广州南":{t:"IZQ",p:"guangzhounan",s:"gzn",i:"67",c:"广州"},"虎门":{t:"IUQ",p:"humen",s:"hm",i:"2134",c:"东莞"},"太原":{t:"TYV",p:"taiyuan",s:"ty",i:"146",c:"太原"},"兰州":{t:"LZJ",p:"lanzhou",s:"lz",i:"107",c:"兰州"},"西宁":{t:"XNO",p:"xining",s:"xn",i:"160",c:"西宁"},"格尔木":{t:"GRO",p:"geermu",s:"gem",i:"492",c:"格尔木"},"那曲":{t:"NQO",p:"naqu",s:"nq",i:"975",c:"那曲"},"拉萨":{t:"LSO",p:"lasa",s:"ls",i:"100",c:"拉萨"},"镇江南":{t:"ZEH",p:"zhenjiangnan",s:"zjn",i:"1610",c:"镇江"},"蚌埠南":{t:"BMH",p:"bengbunan",s:"bbn",i:"206",c:"蚌埠"},"济南西":{t:"JGK",p:"jinanxi",s:"jnx",i:"93",c:"济南"},"无锡东":{t:"WGH",p:"wuxidong",s:"wxd",i:"1332",c:"无锡"},"常州":{t:"CZH",p:"changzhou",s:"cz",i:"338",c:"常州"},"沧州":{t:"COP",p:"cangzhou",s:"cz",i:"337",c:"沧州"},"广阳":{t:"LFP",p:"guangyang",s:"gy",i:"516",c:"廊坊"},"保定东":{t:"BMP",p:"baodingdong",s:"bdd",i:"213",c:"保定"},"邯郸东":{t:"HPP",p:"handandong",s:"hdd",i:"549",c:"邯郸"},"新乡东":{t:"EGF",p:"xinxiangdong",s:"xxd",i:"1423",c:"新乡"},"孝感北":{t:"XJN",p:"xiaoganbei",s:"xgb",i:"1369",c:"孝感"},"岳阳东":{t:"YIQ",p:"yueyangdong",s:"yyd",i:"1570",c:"岳阳"},"耒阳西":{t:"LPQ",p:"leiyangxi",s:"lyx",i:"879",c:"衡阳"},"郴州西":{t:"ICQ",p:"chenzhouxi",s:"czx",i:"343",c:"郴州"},"香港西九龙":{t:"XJA",p:"hkwestkowloon",s:"xgxjl",i:"1371",c:"香港"},"西安":{t:"XAY",p:"xian",s:"xa",i:"156",c:"西安"},"天津南":{t:"TIP",p:"tianjinnan",s:"tjn",i:"26",c:"天津"},"鹤壁东":{t:"HFF",p:"hebidong",s:"hbd",i:"2077",c:"鹤壁"},"衡山西":{t:"HEQ",p:"hengshanxi",s:"hsx",i:"2170",c:"衡阳"},"广州白云":{t:"GBA",p:"guangzhoubaiyun",s:"gzby",i:"70",c:"广州"},"北京丰台":{t:"FTP",p:"beijingfengtai",s:"bjft",i:"229",c:"北京"},"衡阳":{t:"HYQ",p:"hengyang",s:"hy",i:"629",c:"衡阳"},"郴州":{t:"CZQ",p:"chenzhou",s:"cz",i:"336",c:"郴州"},"邢台东":{t:"EDP",p:"xingtaidong",s:"xtd",i:"1416",c:"邢台"},"徐州东":{t:"UUH",p:"xuzhoudong",s:"xzd",i:"1449",c:"徐州"},"宿州东":{t:"SRH",p:"suzhoudong",s:"szd",i:"1208",c:"宿州"},"常州北":{t:"ESH",p:"changzhoubei",s:"czb",i:"330",c:"常州"},"滕州东":{t:"TEK",p:"tengzhoudong",s:"tzd",i:"1282",c:"枣庄"},"昆山南":{t:"KNH",p:"kunshannan",s:"ksn",i:"752",c:"苏州"},"泰安":{t:"TMK",p:"taian",s:"ta",i:"1223",c:"泰安"},"高碑店东":{t:"GMP",p:"gaobeidiandong",s:"gbdd",i:"1991",c:"保定"},"定州东":{t:"DOP",p:"dingzhoudong",s:"dzd",i:"419",c:"保定"},"安阳东":{t:"ADF",p:"anyangdong",s:"ayd",i:"203",c:"安阳"},"咸宁北":{t:"XRN",p:"xianningbei",s:"xnb",i:"3058",c:"咸宁"},"保定":{t:"BDP",p:"baoding",s:"bd",i:"215",c:"保定"},"石家庄北":{t:"VVP",p:"shijiazhuangbei",s:"sjzb",i:"132",c:"石家庄"},"阳泉北":{t:"YPP",p:"yangquanbei",s:"yqb",i:"1531",c:"阳泉"},"吕梁":{t:"LHV",p:"lvliang",s:"ll",i:"818",c:"吕梁"},"绥德":{t:"ODY",p:"suide",s:"sd",i:"2704",c:"榆林"},"靖边":{t:"JIY",p:"jingbian",s:"jb",i:"2205",c:"榆林"},"定边":{t:"DYJ",p:"dingbian",s:"db",i:"348",c:"榆林"},"中卫":{t:"ZWJ",p:"zhongwei",s:"zw",i:"1640",c:"中卫"},"武威":{t:"WUJ",p:"wuwei",s:"ww",i:"1328",c:"武威"},"金昌":{t:"JCJ",p:"jinchang",s:"jc",i:"652",c:"金昌"},"张掖":{t:"ZYJ",p:"zhangye",s:"zy",i:"1646",c:"张掖"},"高台":{t:"GTJ",p:"gaotai",s:"gt",i:"2041",c:"张掖"},"嘉峪关":{t:"JGJ",p:"jiayuguan",s:"jyg",i:"716",c:"嘉峪关"},"玉门":{t:"YXJ",p:"yumen",s:"ym",i:"1518",c:"酒泉"},"哈密":{t:"HMR",p:"hami",s:"hm",i:"591",c:"哈密"},"吐鲁番北":{t:"TAR",p:"tulufanbei",s:"tlfb",i:"1249",c:"吐鲁番"},"乌鲁木齐":{t:"WAR",p:"wulumuqi",s:"wlmq",i:"152",c:"乌鲁木齐"},"成都":{t:"CDW",p:"chengdu",s:"cd",i:"39",c:"成都"},"眉山":{t:"MSW",p:"meishan",s:"ms",i:"2488",c:"眉山"},"峨眉":{t:"EMW",p:"emei",s:"em",i:"430",c:"乐山"},"汉源":{t:"WHW",p:"hanyuan",s:"hy",i:"635",c:"雅安"},"甘洛":{t:"GNE",p:"ganluonan",s:"gln",i:"2018",c:"西昌",nt:"老成昆线5619/K次停靠的旧站；新成昆复线另设'甘洛南'，为不同车站"},"越西":{t:"YIE",p:"yuexi",s:"yx",i:"3425",c:"西昌",nt:"老成昆线普速列车停靠的旧站；新成昆复线另设'越西南'，为不同车站"},"西昌":{t:"ECW",p:"xichang",s:"xc",i:"1358",c:"西昌"},"攀枝花":{t:"PRW",p:"panzhihua",s:"pzh",i:"1032",c:"攀枝花"},"元谋":{t:"AMM",p:"yuanmouxi",s:"ymx",i:"1520",c:"楚雄"},"广通北":{t:"GPM",p:"guangtongbei",s:"gtb",i:"512",c:"楚雄"},"昆明":{t:"KMM",p:"kunming",s:"km",i:"95",c:"昆明"},"沙湾":{t:"SWE",p:"shawannan",s:"swn",i:"2784",c:"乐山",nt:"老成昆线5619次停靠的旧站；新成昆复线另设'沙湾南'，为不同车站"},"轸溪":{nt:"老成昆铁路乘降所，5619/5633次停靠，12306无客票、上车补票","c":"乐山"},"刘沟":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"乐山"},"代湾":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"乐山"},"杨漩":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"乐山"},"共和":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"乐山"},"峨边":{t:"ENE",p:"ebiannan",s:"ebn",i:"426",c:"乐山",nt:"老成昆线5619次停靠的旧站；新成昆复线另设'峨边南'，为不同车站"},"柏村":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"乐山"},"金口河":{t:"JHE",p:"jinkouhenan",s:"jkgn",i:"2234",c:"乐山"},"关村坝":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"乐山"},"尼日":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"苏雄":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"凉红":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"埃岱":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"南尔岗":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"阿寨":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"白果":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"白石岩":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"乃托":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"铁西":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"下普雄":{c:"西昌",nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票"},"拉白":{nt:"老成昆铁路乘降所，5619次停靠，12306无客票、上车补票","c":"凉山"},"普雄":{t:"POW",p:"puxiong",s:"px",i:"1021",c:"西昌"},"青岛北":{t:"QHK",p:"qingdaobei",s:"qdb",i:"1044",c:"青岛"},"胶州北":{t:"JZK",p:"jiaozhoubei",s:"jzb",i:"2296",c:"青岛"},"潍坊":{t:"WFK",p:"weifang",s:"wf",i:"1293",c:"潍坊"},"淄博":{t:"ZBK",p:"zibo",s:"zb",i:"1582",c:"淄博"},"济南":{t:"JNK",p:"jinan",s:"jn",i:"90",c:"济南"},"泰山":{t:"TAK",p:"taishan",s:"ts",i:"1270",c:"泰安"},"兖州":{t:"YZK",p:"yanzhou",s:"yz",i:"1575",c:"济宁"},"商丘":{t:"SQF",p:"shangqiu",s:"sq",i:"1165",c:"商丘"},"开封":{t:"KFF",p:"kaifeng",s:"kf",i:"739",c:"开封"},"洛阳":{t:"LYF",p:"luoyang",s:"ly",i:"864",c:"洛阳"},"宝鸡":{t:"BJY",p:"baoji",s:"bj",i:"226",c:"宝鸡"},"天水":{t:"TSJ",p:"tianshui",s:"ts",i:"1272",c:"天水"},"陇西":{t:"LXJ",p:"longxi",s:"lx",i:"851",c:"定西"},"连云港东":{t:"UKH",p:"lianyungangdong",s:"lygd",i:"867",c:"连云港"},"连云港":{t:"UIH",p:"lianyungang",s:"lyg",i:"869",c:"连云港"},"新沂":{t:"VIH",p:"xinyi",s:"xy",i:"3106",c:"徐州"},"邳州":{t:"PJH",p:"pizhou",s:"pz",i:"2606",c:"徐州"},"鄯善":{t:"SSR",p:"shanshan",s:"ss",i:"2767",c:"吐鲁番"},"吐鲁番":{t:"TFR",p:"tulufan",s:"tlf",i:"1250",c:"吐鲁番"},"杭州东":{t:"HGH",p:"hangzhoudong",s:"hzd",i:"87",c:"杭州"},"贵阳北":{t:"KQW",p:"guiyangbei",s:"gyb",i:"62",c:"贵阳"},"昆明南":{t:"KOM",p:"kunmingnan",s:"kmn",i:"96",c:"昆明"},"廊坊":{t:"LJP",p:"langfang",s:"lf",i:"787",c:"廊坊"},"天津":{t:"TJP",p:"tianjin",s:"tj",i:"25",c:"天津"},"静海":{t:"JHP",p:"jinghai",s:"jh",i:"663",c:"天津"},"泊头":{t:"BZP",p:"botou",s:"bt",i:"1732",c:"沧州"},"邹城":{t:"ZIK",p:"zoucheng",s:"zc",i:"3270",c:"济宁"},"滕州":{t:"TXK",p:"tengzhou",s:"tz",i:"2904",c:"枣庄"},"枣庄西":{t:"ZFK",p:"zaozhuangxi",s:"zzx",i:"1659",c:"枣庄"},"宿州":{t:"OXH",p:"suzhou",s:"sz",i:"1214",c:"宿州"},"蚌埠":{t:"BBH",p:"bengbu",s:"bb",i:"207",c:"蚌埠"},"明光":{t:"MGH",p:"mingguang",s:"mg",i:"900",c:"滁州"},"滁州北":{t:"CUH",p:"chuzhoubei",s:"czb",i:"329",c:"滁州"},"镇江":{t:"ZJH",p:"zhenjiang",s:"zj",i:"1605",c:"镇江"},"丹阳":{t:"DYH",p:"danyang",s:"dy",i:"409",c:"镇江"},"昆山":{t:"KSH",p:"kunshan",s:"ks",i:"750",c:"苏州"},"阿拉山口":{t:"AKR",p:"alashankou",s:"alsk",i:"190",c:"博乐"},"枣庄":{t:"ZEK",p:"zaozhuang",s:"zz",i:"1654",c:"枣庄"},"定远":{t:"EWH",p:"dingyuan",s:"dy",i:"1910",c:"滁州"},"滁州":{t:"CXH",p:"chuzhou",s:"cz",i:"335",c:"滁州"},"丹阳北":{t:"EXH",p:"danyangbei",s:"dyb",i:"1905",c:"镇江"},"上海松江":{t:"IMH",p:"shanghaisongjiang",s:"shsj",i:"1115",c:"上海"},"苏州南":{t:"SMU",p:"suzhounan",s:"szn",i:"2832",c:"苏州"},"湖州":{t:"VZH",p:"huzhou",s:"hz",i:"643",c:"湖州"},"雅安":{t:"YAE",p:"yaan",s:"ya",i:"1457",c:"雅安"},"康定":{nt:"川藏铁路（雅安—林芝段）在建车站，尚未建成办客，无12306电报码","c":"甘孜"},"林芝":{t:"LZO",p:"linzhi",s:"lz",i:"882",c:"林芝"},"哈尔滨西":{t:"VAB",p:"haerbinxi",s:"hebx",i:"75",c:"哈尔滨"},"长春西":{t:"CRT",p:"changchunxi",s:"ccx",i:"34",c:"长春"},"沈阳北":{t:"SBT",p:"shenyangbei",s:"syb",i:"138",c:"沈阳"},"大连北":{t:"DFT",p:"dalianbei",s:"dlb",i:"375",c:"大连"},"沿线车站":{}};
+
+/* ---------- 车站注册 ---------- */
+/* 从线路的 stations 字段和车次的 stops 字段提取车站，构建统一注册表 */
+/* 车站 = { name, telecode, pinyin, shortCode, seq, city, lineIds: [], trainIds: [] } */
+let STATION_REGISTRY = {};
+
+/* 合并车站元数据（电报码等），找不到的保持默认 */
+function mergeStationMeta(name, station){
+  const meta = STATION_META[name];
+  if(meta){
+    if(meta.t) station.telecode = meta.t;
+    if(meta.p) station.pinyin = meta.p;
+    if(meta.s) station.shortCode = meta.s;
+    if(meta.i) station.seq = meta.i;
+    if(meta.c) station.city = meta.c;
+    if(meta.nt) station.note = meta.nt;
+    if(meta.scope) station.scope = meta.scope;
+    if(meta.country) station.country = meta.country;
+  }
+  return station;
+}
+function buildStationRegistry(){
+  STATION_REGISTRY = {};
+  // 从线路提取
+  DB.lines.forEach(l=>{
+    (l.stations||'').split(/[·\s]+/).filter(Boolean).forEach(s=>{
+      if(!STATION_REGISTRY[s]) STATION_REGISTRY[s]=mergeStationMeta(s,{name:s, lineIds:[], trainIds:[]});
+      if(!STATION_REGISTRY[s].lineIds.includes(l.id)) STATION_REGISTRY[s].lineIds.push(l.id);
+    });
+  });
+  // 从车次停站提取
+  DB.trains.forEach(t=>{
+    (t.stops||[]).forEach(s=>{
+      if(!STATION_REGISTRY[s.station]) STATION_REGISTRY[s.station]=mergeStationMeta(s.station,{name:s.station, lineIds:[], trainIds:[]});
+      if(!STATION_REGISTRY[s.station].trainIds.includes(t.id)) STATION_REGISTRY[s.station].trainIds.push(t.id);
+    });
+  });
+  // 补充关联线路：从车次停站关联到线路
+  DB.trains.forEach(t=>{
+    const lines = linesOfTrain(t.id);
+    (t.stops||[]).forEach(s=>{
+      const st = STATION_REGISTRY[s.station];
+      if(st){
+        lines.forEach(l=>{
+          if(st.lineIds.includes(l.id)) return;
+          // 只加该线路确实经过的车站
+          const lineStations = (l.stations||'').split(/[·\s]+/).filter(Boolean);
+          if(lineStations.includes(s.station) || lineStations.some(ls=>s.station.includes(ls)||ls.includes(s.station))){
+            st.lineIds.push(l.id);
+          }
+        });
+      }
+    });
+  });
+  return STATION_REGISTRY;
+}
+function getStations(){
+  return Object.values(STATION_REGISTRY).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function getStation(name){
+  return STATION_REGISTRY[name] || null;
+}
+// 线路的站点列表（按顺序）
+function lineStationList(line){
+  return (line.stations||'').split(/[·\s]+/).filter(Boolean).map(s=>STATION_REGISTRY[s]).filter(Boolean);
+}
+
+/* 构建车站注册表 */
+buildStationRegistry();
+
+/* ---------- 工具 ---------- */
+function $(sel,ctx){return (ctx||document).querySelector(sel)}
+function $$(sel,ctx){return Array.from((ctx||document).querySelectorAll(sel))}
+function escapeHTML(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function genId(prefix){return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function genNo(list){const max=list.reduce((m,x)=>{const n=parseInt(String(x.no).replace(/\D/g,''),10);return isNaN(n)||n<m?m:n},0);return String(max+1).padStart(5,'0')}
+
+function toast(msg){
+  const t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+const modalState={cb:null};
+function showModal(title,text,cb){
+  $('#modalTitle').textContent=title;
+  $('#modalText').textContent=text;
+  modalState.cb=cb;
+  $('#modalMask').classList.add('show');
+}
+$('#modalCancel').addEventListener('click',()=>{$('#modalMask').classList.remove('show');modalState.cb=null});
+$('#modalConfirm').addEventListener('click',()=>{const cb=modalState.cb;modalState.cb=null;$('#modalMask').classList.remove('show');if(cb)cb()});
+
+/* ---------- 路由 ---------- */
+function route(){
+  const hash=location.hash.replace(/^#/,'')||'/';
+  const pathOnly=hash.split('?')[0]; // 剥离 query，query 由各视图自行从 location.hash 解析
+  const parts=pathOnly.split('/').filter(Boolean);
+  const path=parts.join('/');
+  render(path);
+  window.scrollTo(0,0);
+}
+function go(p){location.hash='#/'+p.replace(/^\//,'');}
+
+window.addEventListener('hashchange',route);
+window.addEventListener('DOMContentLoaded',route);
+
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-route]');
+  if(el){e.preventDefault();go(el.dataset.route);}
+});
+
+/* ---------- 视图：待开通车站专题 ---------- */
+/* 作用域/跨境徽章（车站详情的跨境标注） */
+function upcomingScopeBadge(st){
+  if(st.scope==='cross-border') return `<span class="scope-badge scope-xb">跨境 ⤳ ${escapeHTML(st.country||'')}</span>`;
+  if(st.scope==='international') return `<span class="scope-badge scope-int">境外 · ${escapeHTML(st.country||'')}</span>`;
+  if(st.scope==='domestic') return `<span class="scope-badge scope-dm">国内</span>`;
+  return '';
+}
+/* 把 open 解析为可用于排序/倒计时的日期 */
+function upcomingSortDate(open){
+  if(/^\d{4}-\d{2}-\d{2}$/.test(open)) return open;
+  if(/^\d{4}-\d{2}$/.test(open)) return open+'-15';
+  if(/^\d{4}$/.test(open)) return open+'-06-30';
+  return '2999-12-31';
+}
+function upcomingDays(open){
+  const s=upcomingSortDate(open);
+  if(!/^\d{2}-\d{2}$/.test(s.slice(5))) return null;
+  const d1=new Date(s).getTime();
+  const d2=new Date(todayStr()).getTime();
+  return Math.max(1, Math.round((d1-d2)/86400000));
+}
+function upcomingBucket(sortDate){
+  const y=parseInt(sortDate.slice(0,4),10), m=parseInt(sortDate.slice(5,7),10);
+  const now=new Date(), ny=now.getFullYear(), nm=now.getMonth()+1;
+  const months=(y-ny)*12+(m-nm);
+  if(months<=0) return {label:'已进入倒计时',key:'soon',cls:'b-soon'};
+  if(months<=12) return {label:'一年内开通',key:'in12',cls:'b-in12'};
+  if(months<=36) return {label:'1–3 年',key:'mid',cls:'b-mid'};
+  return {label:'3 年以上（远期）',key:'far',cls:'b-far'};
+}
+function viewUpcoming(){
+  const list=UPCOMING_STATIONS.slice().map(x=>({...x, sort:upcomingSortDate(x.open)}));
+  /* 开通时间临近的置顶：按预计开通日期升序排 */
+  list.sort((a,b)=>a.sort<b.sort?-1:a.sort>b.sort?1:0);
+  const now=new Date().getFullYear();
+  const count=list.length;
+  const soonCount=UPCOMING_STATIONS.filter(x=>{
+    const s=upcomingSortDate(x.open); const y=parseInt(s.slice(0,4),10);
+    return y>=now;
+  }).length;
+  const nextYear=list.find(x=>(/^\d{4}-\d{2}-\d{2}$/.test(x.sort)&&x.sort>=todayStr()))||list.find(x=>x.sort>=upcomingSortDate(String(now+1)));
+  /* 分组 */
+  const groups=[];
+  UPCOMING_STATIONS.forEach(x=>{
+    const s=upcomingSortDate(x.open);
+    const b=upcomingBucket(s);
+    let g=groups.find(g=>g.key===b.key);
+    if(!g){g={...b, items:[]};groups.push(g);}
+    g.items.push({...x, sort:s, bucket:b});
+  });
+  /* 每组内按预计日期升序 */
+  groups.forEach(g=>g.items.sort((a,b)=>a.sort<b.sort?-1:a.sort>b.sort?1:0));
+
+  const scopeSummary = (()=>{
+    const c=Object.keys(GLOBAL_SCOPE.corridors||{});
+    if(!c.length) return '';
+    return `<div class="up-corr">跨境走廊：${c.map(k=>{const co=GLOBAL_SCOPE.corridors[k];return `<em>${k}</em><small>${co.border.join('、')}</small>`}).join('')}</div>`;
+  })();
+
+  return `
+  <div class="page">
+    <div class="breadcrumb"><a data-route="/">首页</a><span class="sep">/</span><span>车站 · 待开通专题</span></div>
+    <h1 class="page-title">待开通车站</h1>
+    <div class="page-sub">Upcoming Stations · ${count} 站 · 开通时间由工程预期推定，以官方发布为准</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin:18px 0">
+      <div class="up-kpi"><b class="uk-n">${count}</b><span>收录车站</span></div>
+      <div class="up-kpi"><b class="uk-n" style="color:#e07355">${soonCount}</b><span>${now} 年起陆续开通</span></div>
+      ${nextYear?`<div class="up-kpi up-kpi-wide"><span>下一个高确定性节点</span><b class="uk-line">${escapeHTML(nextYear.name)} · ${escapeHTML(nextYear.open||'')}</b></div>`:''}
+    </div>
+
+    ${scopeSummary}
+
+    ${groups.map(g=>`
+      <div class="up-group">
+        <div class="up-group-head"><span class="up-badge ${g.cls}">${g.label}</span><small>${g.items.length} 站</small></div>
+        <div class="up-list">
+          ${g.items.map(x=>`
+            <div class="up-row">
+              <div class="up-name">
+                <b>${escapeHTML(x.name)}</b>
+                ${x.scale?`<small class="up-scale">${escapeHTML(x.scale)}</small>`:''}
+              </div>
+              <div class="up-city">${escapeHTML(x.city)}</div>
+              <div class="up-line">${escapeHTML(x.line)}<small>${escapeHTML(x.ltype||'')} · ${escapeHTML(x.status||'')}</small></div>
+              <div class="up-open">${escapeHTML(x.open||'')}</div>
+              ${x.note?`<div class="up-note">${escapeHTML(x.note)}</div>`:''}
+            </div>`).join('')}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+/* 待开通线路状态分档徽章：0 联调联试/铺轨（临近）1 在建 2 拟建/远期 */
+function upcomingLineStatusTag(status){
+  const s=status||'';
+  let cls='ta-status-1', label=s;
+  if(/联调联试|铺轨|试运行|开通在即/.test(s)){cls='ta-status-0';}
+  else if(/在建|施工/.test(s)){cls='ta-status-1';}
+  else{cls='ta-status-2';}
+  return `<span class="ul-tag ${cls}">${escapeHTML(label)}</span>`;
+}
+function viewUpcomingLines(){
+  const byYear={};
+  UPCOMING_LINES.forEach(l=>{
+    const y=(l.open||'2999').slice(0,4);
+    if(!byYear[y]) byYear[y]=[];
+    byYear[y].push(l);
+  });
+  const years=Object.keys(byYear).sort();
+  const total=UPCOMING_LINES.length;
+  const stCount=new Set(UPCOMING_LINES.flatMap(l=>l.stations||[])).size;
+  return `
+  <div class="page">
+    <div class="breadcrumb"><a data-route="/">首页</a><span class="sep">/</span><span>线路 · 待开通专题</span></div>
+    <h1 class="page-title">待开通线路</h1>
+    <div class="page-sub">Upcoming Lines · ${total} 条线路 · 覆盖 ${stCount} 个在建车站 · 开通时间以官方发布为准</div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:14px;margin:18px 0">
+      <div class="up-kpi"><b class="uk-n">${total}</b><span>在建/拟建线路</span></div>
+      <div class="up-kpi"><b class="uk-n" style="color:#e07355">${Object.keys(byYear).filter(y=>y<='2026').reduce((s,y)=>s+byYear[y].length,0)+Object.keys(byYear).filter(y=>y==='2027').reduce((s,y)=>s+byYear[y].length,0)}</b><span>2026–2027 关键通车窗口</span></div>
+      <div class="up-kpi up-kpi-wide"><span>多对多关系</span><b class="uk-line">线路 ↔ 车站 · 一站可属多线（如上海东站、宝山站、天府站）</b></div>
+    </div>
+
+    <p class="ul-m2m">说明：每条线路列出其途经的在建车站（与「待开通车站」专题双向关联）；同一车站会出现在其所属的每一条线路下。部分枢纽站（如宝山站、天府站南场）由多条待开通线路共用。</p>
+
+    ${years.map(y=>{
+      const list=byYear[y].slice().sort((a,b)=>((a.open||'')+'999').localeCompare((b.open||'')+'999'));
+      const near=y<=String(new Date().getFullYear());
+      return `
+      <div class="up-group">
+        <div class="up-group-head"><span class="up-badge ${near?'b-soon':'b-mid'}">${y} 年${near?' · 通车窗口':''}</span><small>${list.length} 条线路</small></div>
+        ${list.map(l=>{
+          const m2m = (l.stations||[]).some(s=>upcomingLinesOfStation(s).some(x=>x.name!==l.name));
+          return `
+          <div class="up-line-card">
+            <div class="ul-top">
+              <span class="ul-name">${escapeHTML(l.name)}</span>
+              <span class="ul-sub">${escapeHTML(l.from||'')} → ${escapeHTML(l.to||'')} · 预计开通 ${escapeHTML(l.open||'')}</span>
+              ${upcomingLineStatusTag(l.status)}
+            </div>
+            <div class="ul-meta">
+              ${l.ltype?`<span class="ul-tag">${escapeHTML(l.ltype)}</span>`:''}
+              ${l.speed?`<span class="ul-tag ta-speed">${escapeHTML(l.speed)} km/h</span>`:''}
+              ${l.length?`<span class="ul-tag ta-len">${escapeHTML(l.length)} km</span>`:''}
+              ${l.corridor?`<span class="ul-tag">通道 · ${escapeHTML(l.corridor)}</span>`:''}
+              ${m2m?`<span class="ul-tag">↔ 共用枢纽站</span>`:''}
+            </div>
+            ${l.note?`<div class="ul-card-note">${escapeHTML(l.note)}</div>`:''}
+            <div class="ul-sta-wrap">
+              <span class="ul-where">途经在建车站</span>
+              ${(l.stations||[]).map(s=>`
+                <span class="ul-sta" data-goto="/upcoming?focus=${encodeURIComponent(s)}">
+                  ${escapeHTML(s)}
+                  ${(()=>{const co=upcomingLinesOfStation(s).filter(x=>x.name!==l.name).length;return co?`<small>+${co}</small>`:'';})()}
+                </span>`).join('')||'<span class="ul-where">（暂无已收录在建站）</span>'}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ---------- 视图：首页 ---------- */
+function viewHome(){
+  const trains=DB.trains.slice().sort((a,b)=>(a.code||'').localeCompare(b.code||''));
+  const stations=getStations().sort((a,b)=>b.trainIds.length-a.trainIds.length);
+
+  return `
+  <div class="hm">
+    <div class="hm-title">火车档案</div>
+    <div class="hm-sub">Train Archive · 中国铁路列车档案</div>
+    <div class="hm-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="搜索车次 / 线路 / 车站…" onchange="globalSearch(this.value)" />
+    </div>
+
+    <div class="hm-section">
+      <div class="hm-head">
+        <h2><span class="hm-badge" style="background:rgba(42,101,204,.15);color:var(--acc);border:1px solid rgba(42,101,204,.4)">站</span> 车站 <small>${stations.length} 站</small></h2>
+        <a class="hm-more" data-route="/stations">全部 →</a>
+      </div>
+      <div class="hm-stations">
+        ${stations.slice(0,20).map(s=>`
+          <a class="hm-station" data-route="/stations/${encodeURIComponent(s.name)}">${escapeHTML(s.name)}<span class="s-n">${s.trainIds.length}</span></a>`).join('')}
+      </div>
+    </div>
+
+    <div class="hm-section">
+      <div class="hm-head">
+        <h2><span class="hm-badge" style="background:rgba(192,73,44,.15);color:#e07355;border:1px solid rgba(192,73,44,.4)">列</span> 列车 <small>${trains.length} 次 · 现行 ${trains.filter(t=>trainStatus(t)==='active').length} / 已停运 ${trains.filter(t=>trainStatus(t)==='discontinued').length}</small></h2>
+        <a class="hm-more" data-route="/trains">全部 →</a>
+      </div>
+      <div class="hm-list">
+        ${trains.map(hmRowTrain).join('')}
+      </div>
+    </div>
+
+    <div class="hm-cta">
+      <span>有数据要补充？</span>
+      <a class="link-brass" data-route="/contribute">提交档案 →</a>
+    </div>
+  </div>`;
+}
+
+function hmRowTrain(x){
+  const lines = linesOfTrain(x.id);
+  const status = trainStatus(x);
+  const statusText = status==='active' ? '现行' : '已停';
+  const linesText = lines.length ? lines.map(l=>l.name).join(' › ') : '';
+  return `
+  <a class="hm-row" data-route="/trains/${x.id}">
+    <span class="r-code">${escapeHTML(x.code)}</span>
+    <span class="r-fromto">${escapeHTML(x.from)} → ${escapeHTML(x.to)}</span>
+    <span class="r-type">${escapeHTML(x.model||'')}</span>
+    <span class="r-status" style="color:${status==='active'?'var(--green)':'var(--ink-dim)'}">${statusText}</span>
+    <span class="r-lines">${escapeHTML(linesText)}</span>
+  </a>`;
+}
+
+function cardArchive(x){
+  if(x._t==='line'){
+    return `
+    <div class="arc-card" data-route="/lines/${x.id}">
+      <span class="stamp">№ ${escapeHTML(x.no||'')}</span>
+      <span class="type type-line">线路</span>
+      <h4>${escapeHTML(x.name)}</h4>
+      <div class="sub">${escapeHTML(x.latin||'')}</div>
+      <div class="arc-meta">
+        <div class="row"><span class="k">起讫</span><span class="v">${escapeHTML(x.from)} — ${escapeHTML(x.to)}</span></div>
+        <div class="row"><span class="k">全长</span><span class="v">${escapeHTML(x.length)} km</span></div>
+        <div class="row"><span class="k">通车</span><span class="v">${escapeHTML(x.opened||'-')}</span></div>
+        <div class="row"><span class="k">特征</span><span class="v">${escapeHTML(x.electrified==='是'?'电气化':'非电气化')} · ${escapeHTML(x.double||'-')}</span></div>
+      </div>
+      <div class="date">归档于 ${escapeHTML(x.createdAt||'-')}</div>
+    </div>`;
+  }else{
+    const ls=linesOfTrain(x.id);
+    const status=trainStatus(x);
+    return `
+    <div class="arc-card" data-route="/trains/${x.id}">
+      <span class="stamp">№ ${escapeHTML(x.no||'')}</span>
+      <span class="type type-train">列车</span>
+      <em class="${status==='active'?'t-yes':'t-no'}" style="position:absolute;top:14px;right:14px;font-size:10px">${statusLabel(x)}</em>
+      <h4>${escapeHTML(x.code)} 次</h4>
+      <div class="sub">${escapeHTML(x.from)} → ${escapeHTML(x.to)}</div>
+      <div class="arc-meta">
+        <div class="row"><span class="k">车型</span><span class="v">${escapeHTML(x.model)}</span></div>
+        <div class="row"><span class="k">车种</span><span class="v">${escapeHTML(x.trainType||'-')}</span></div>
+        <div class="row"><span class="k">全程</span><span class="v">${escapeHTML(x.duration||'-')}</span></div>
+        <div class="row"><span class="k">生效</span><span class="v">${escapeHTML(x.validFrom||'-')}${x.validUntil?' → '+escapeHTML(x.validUntil):' 至今'}</span></div>
+        <div class="row"><span class="k">线路</span><span class="v">${ls.length?ls.map(l=>escapeHTML(l.name)).join(' › '):'未关联'}</span></div>
+      </div>
+      <div class="date">归档于 ${escapeHTML(x.createdAt||'-')}</div>
+    </div>`;
+  }
+}
+
+/* ---------- 视图：线路列表 ---------- */
+window.__lineFilter={q:'',elec:'all'};
+function viewLines(){
+  const q=window.__lineFilter.q||'';
+  const elec=window.__lineFilter.elec||'all';
+  let list=DB.lines.slice().map(x=>({...x,_t:'line'}));
+  if(q){const k=q.toLowerCase();list=list.filter(x=>[x.name,x.latin,x.from,x.to,x.stations,x.desc].some(v=>String(v||'').toLowerCase().includes(k)))}
+  if(elec==='elec')list=list.filter(x=>x.electrified==='是');
+  if(elec==='non')list=list.filter(x=>x.electrified!=='是');
+
+  return `
+  <div class="page">
+    <div class="breadcrumb"><a data-route="/">首页</a><span class="sep">/</span><span>线路档案</span></div>
+    <h1 class="page-title">铁路线路档案</h1>
+    <div class="page-sub">Railway Lines · ${DB.lines.length} entries</div>
+
+    <div class="toolbar">
+      <div class="search-mini">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+        <input id="lineSearch" type="text" placeholder="搜索线路名 / 起讫 / 沿线车站…" value="${escapeHTML(q)}" oninput="window.__lineFilter.q=this.value;debounceSearch('lines')">
+      </div>
+      <span class="filter-chip ${elec==='all'?'active':''}" onclick="setLineFilter('elec','all')">全部</span>
+      <span class="filter-chip ${elec==='elec'?'active':''}" onclick="setLineFilter('elec','elec')">电气化</span>
+      <span class="filter-chip ${elec==='non'?'active':''}" onclick="setLineFilter('elec','non')">非电气化</span>
+      <button class="btn-brass" data-route="/contribute?type=line">+ 新增线路</button>
+    </div>
+
+    <div class="list-grid">
+      ${list.length?list.map(cardArchive).join(''):`
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <h4>未找到匹配的档案</h4>
+          <p>尝试更换关键词，或贡献一条新档案</p>
+        </div>`}
+    </div>
+  </div>`;
+}
+window.setLineFilter=(k,v)=>{window.__lineFilter[k]=v;render(decodeURIComponent(location.hash.replace(/^#/,'')||'/'))};
+
+let __searchTimer=null;
+window.debounceSearch=(which)=>{
+  clearTimeout(__searchTimer);
+  __searchTimer=setTimeout(()=>{
+    render(decodeURIComponent(location.hash.replace(/^#/,'')||'/'));
+    const el=document.getElementById(which==='lines'?'lineSearch':'trainSearch');
+    if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length)}
+  },200);
+};
+
+/* ---------- 视图：列车列表 ---------- */
+window.__trainFilter={q:'',model:'all',status:'all'};
+function viewTrains(){
+  const q=window.__trainFilter.q||'';
+  const model=window.__trainFilter.model||'all';
+  const status=window.__trainFilter.status||'all';
+  let list=DB.trains.slice().map(x=>({...x,_t:'train'}));
+  if(q){
+    const k=q.toLowerCase();
+    list=list.filter(x=>{
+      const lineNames=linesOfTrain(x.id).map(l=>l.name).join(' ');
+      return [x.code,x.from,x.to,x.trainType,x.desc,lineNames].some(v=>String(v||'').toLowerCase().includes(k));
+    });
+  }
+  if(model!=='all')list=list.filter(x=>x.model===model);
+  if(status!=='all')list=list.filter(x=>trainStatus(x)===status);
+  const models=['全部','高铁','动车','直达特快','特快','快速','普通'];
+  const statuses=[['all','全部状态'],['active','现行'],['discontinued','已停运']];
+
+  return `
+  <div class="page">
+    <div class="breadcrumb"><a data-route="/">首页</a><span class="sep">/</span><span>列车档案</span></div>
+    <h1 class="page-title">运营列车档案</h1>
+    <div class="page-sub">Train Services · ${DB.trains.length} entries · 现行 ${DB.trains.filter(t=>trainStatus(t)==='active').length} / 已停运 ${DB.trains.filter(t=>trainStatus(t)==='discontinued').length}</div>
+
+    <div class="toolbar">
+      <div class="search-mini">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+        <input id="trainSearch" type="text" placeholder="搜索车次 / 区间 / 线路…" value="${escapeHTML(q)}" oninput="window.__trainFilter.q=this.value;debounceSearch('trains')">
+      </div>
+      <select class="filter-select" onchange="window.__trainFilter.model=this.value;render(decodeURIComponent(location.hash.replace(/^#/,'')||'/'))">
+        ${models.map(m=>`<option value="${m==='全部'?'all':m}" ${model===(m==='全部'?'all':m)?'selected':''}>${m}</option>`).join('')}
+      </select>
+      <select class="filter-select" onchange="window.__trainFilter.status=this.value;render(decodeURIComponent(location.hash.replace(/^#/,'')||'/'))">
+        ${statuses.map(([v,l])=>`<option value="${v}" ${status===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <button class="btn-brass" data-route="/contribute?type=train">+ 新增列车</button>
+    </div>
+
+    <div class="list-grid">
+      ${list.length?list.map(cardArchive).join(''):`
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <h4>未找到匹配的档案</h4>
+          <p>尝试更换关键词，或贡献一条新档案</p>
+        </div>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- 视图：车站列表 ---------- */
+function viewStations(){
+  const stations = getStations();
+  return `
+  <div class="page">
+    <div class="breadcrumb"><a data-route="/">首页</a><span class="sep">/</span><span>车站</span></div>
+    <h1 class="page-title">车站一览</h1>
+    <div class="page-sub">Stations · ${stations.length} 站 · 覆盖线路与列车关联</div>
+
+    <div class="toolbar">
+      <div class="search-mini">
+        <span class="icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+        <input id="stationSearch" type="text" placeholder="搜索车站…" oninput="debounceSearch('stations')">
+      </div>
+      <span style="font-size:13px;color:var(--ink-dim)">按列车密度排序</span>
+    </div>
+
+    <div class="station-tags" style="margin-top:20px">
+      ${stations.sort((a,b)=>b.trainIds.length-a.trainIds.length).map(s=>`
+        <a class="station-tag" data-route="/stations/${encodeURIComponent(s.name)}">${escapeHTML(s.name)}<span class="s-count">${s.trainIds.length}次·${s.lineIds.length}线</span></a>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ---------- 视图：线路详情 ---------- */
+function viewLineDetail(id){
+  const x=DB.lines.find(l=>l.id===id);
+  if(!x) return notFound('线路');
+  return `
+  <div class="page">
+    <div class="breadcrumb">
+      <a data-route="/">首页</a><span class="sep">/</span>
+      <a data-route="/lines">线路档案</a><span class="sep">/</span>
+      <span>${escapeHTML(x.name)}</span>
+    </div>
+
+    <div class="detail-hero">
+      <span class="detail-stamp">№ ${escapeHTML(x.no||'')}</span>
+      <span class="detail-type type-line">线路档案</span>
+      <h1 class="detail-name">${escapeHTML(x.name)}</h1>
+      <div class="detail-latin">${escapeHTML(x.latin||'')}</div>
+      <div class="detail-actions">
+        <button class="btn-ghost" data-route="/edit/line/${x.id}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          编辑
+        </button>
+        <button class="btn-danger" onclick="deleteEntry('line','${x.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          删除
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div>
+        <div class="pv-edit-hint">// 字段带绿色虚线下划线 = 可编辑，点击就地修改，回车保存，Esc 取消</div>
+
+        <!-- 车站优先展示 -->
+        <div class="station-section">
+          <h4>沿线车站 <small style="color:var(--ink-dim);font-weight:400;font-family:'JetBrains Mono',monospace">${lineStationList(x).length} 站</small></h4>
+          <div class="station-tags">
+            ${lineStationList(x).map(s=>`
+              <a class="station-tag" data-route="/stations/${encodeURIComponent(s.name)}">${escapeHTML(s.name)}<span class="s-count">${s.trainIds.length}次</span></a>`).join('') || '<span style="color:var(--ink-dim);font-size:13px">暂无车站信息</span>'}
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>技术参数</h3>
+          <div class="param-table">
+            <div class="pk">起讫站</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="from">${escapeHTML(x.from)}</span> — <span class="pv-editable" data-type="line" data-id="${x.id}" data-field="to">${escapeHTML(x.to)}</span></div>
+            <div class="pk">全长</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="length">${escapeHTML(x.length)}</span> 公里</div>
+            <div class="pk">建成通车</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="opened">${escapeHTML(x.opened||'-')}</span></div>
+            <div class="pk">铁路等级</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="grade">${escapeHTML(x.grade||'-')}</span></div>
+            <div class="pk">电气化</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="electrified">${escapeHTML(x.electrified||'-')}</span></div>
+            <div class="pk">复线状态</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="double">${escapeHTML(x.double||'-')}</span></div>
+            <div class="pk">供电制式</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="voltage">${escapeHTML(x.voltage||'-')}</span></div>
+            <div class="pk">最高速度</div><div class="pv"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="maxSpeed">${escapeHTML(x.maxSpeed||'-')}</span> km/h</div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>线路简介</h3>
+          <p class="desc-text"><span class="pv-editable" style="display:inline" data-type="line" data-id="${x.id}" data-field="desc">${escapeHTML(x.desc||'暂无简介')}</span></p>
+        </div>
+
+        <div class="detail-section">
+          <h3>历史时间线</h3>
+          <div class="timeline">
+            ${(x.timeline||[]).map((t,i)=>`
+              <div class="tl-item">
+                <div class="tl-date"><span class="pv-editable" data-type="line" data-id="${x.id}" data-field="timeline.${i}.date">${escapeHTML(t.date)}</span></div>
+                <div class="tl-text"><span class="pv-editable" style="display:inline" data-type="line" data-id="${x.id}" data-field="timeline.${i}.text">${escapeHTML(t.text)}</span></div>
+              </div>`).join('') || '<p class="desc-text">暂无时间线</p>'}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-card">
+          <h4>// Quick Facts</h4>
+          <div class="meta-row"><span class="k">档案编号</span><span class="v">${escapeHTML(x.no||'-')}</span></div>
+          <div class="meta-row"><span class="k">归档日期</span><span class="v">${escapeHTML(x.createdAt||'-')}</span></div>
+          <div class="meta-row"><span class="k">沿线车站</span><span class="v">${escapeHTML(x.stations||'-')}</span><span class="v" style="cursor:pointer;font-size:12px;color:var(--acc);font-family:'JetBrains Mono',monospace" onclick="event.stopPropagation();go('/lines/${x.id}')">${lineStationList(x).length} 站 ›</span></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>// 运营列车 <small style="color:var(--ink-dim);font-weight:400">${trainsOfLine(x.id).length}</small></h4>
+          ${trainsOfLine(x.id).slice(0,8).map(t=>`
+            <div class="meta-row" style="cursor:pointer" data-route="/trains/${t.id}">
+              <span class="k">${escapeHTML(t.code)} 次 <em class="${trainStatus(t)==='active'?'t-yes':'t-no'}" style="margin-left:4px;font-size:10px">${statusLabel(t)}</em></span><span class="v">${escapeHTML(t.from)}→${escapeHTML(t.to)}</span>
+            </div>`).join('') || '<div class="meta-row"><span class="k">暂无关联车次</span><span class="v">-</span></div>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 视图：列车详情 ---------- */
+function viewTrainDetail(id){
+  const x=DB.trains.find(t=>t.id===id);
+  if(!x) return notFound('列车');
+  return `
+  <div class="page">
+    <div class="breadcrumb">
+      <a data-route="/">首页</a><span class="sep">/</span>
+      <a data-route="/trains">列车档案</a><span class="sep">/</span>
+      <span>${escapeHTML(x.code)} 次</span>
+    </div>
+
+    <div class="detail-hero">
+      <span class="detail-stamp">№ ${escapeHTML(x.no||'')}</span>
+      <span class="detail-type type-train">列车档案</span>
+      <h1 class="detail-name">${escapeHTML(x.code)} 次</h1>
+      <div class="detail-latin">${escapeHTML(x.from)} → ${escapeHTML(x.to)}</div>
+      <div class="detail-life">
+        <em class="${trainStatus(x)==='active'?'t-yes':'t-no'}">${statusLabel(x)}</em>
+        <span class="life-item"><b>生效</b>${escapeHTML(x.validFrom||'—')}</span>
+        <span class="life-item"><b>失效</b>${escapeHTML(x.validUntil||'—')}</span>
+        <span class="life-item"><b>调图</b>${escapeHTML(x.adjustVersion||'—')}</span>
+      </div>
+      <div class="detail-actions">
+        <button class="btn-ghost" data-route="/edit/train/${x.id}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          编辑
+        </button>
+        <button class="btn-danger" onclick="deleteEntry('train','${x.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          删除
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div>
+        <div class="pv-edit-hint">// 字段带绿色虚线下划线 = 可编辑，点击就地修改，回车保存，Esc 取消</div>
+        ${renderHotComment(x)}
+        <div class="detail-section">
+          <h3>运行参数</h3>
+          <div class="param-table">
+            <div class="pk">车次</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="code">${escapeHTML(x.code)}</span></div>
+            <div class="pk">车型</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="model">${escapeHTML(x.model||'-')}</span></div>
+            <div class="pk">车种</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="trainType">${escapeHTML(x.trainType||'-')}</span></div>
+            <div class="pk">运行区间</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="from">${escapeHTML(x.from)}</span> — <span class="pv-editable" data-type="train" data-id="${x.id}" data-field="to">${escapeHTML(x.to)}</span></div>
+            <div class="pk">发车时间</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="depart">${escapeHTML(x.depart||'-')}</span></div>
+            <div class="pk">到达时间</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="arrive">${escapeHTML(x.arrive||'-')}</span></div>
+            <div class="pk">全程耗时</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="duration">${escapeHTML(x.duration||'-')}</span></div>
+            <div class="pk">编组</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="formation">${escapeHTML(x.formation||'-')}</span></div>
+            <div class="pk">最高速度</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="maxSpeed">${escapeHTML(x.maxSpeed||'-')}</span> km/h</div>
+            <div class="pk">担当局</div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="operator">${escapeHTML(x.operator||'-')}</span></div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>运营线路 <small class="sec-count">${linesOfTrain(x.id).length} 条</small></h3>
+          <div class="line-chain">
+            ${(()=>{
+              const ls=linesOfTrain(x.id);
+              if(!ls.length) return '<p class="desc-text">未关联线路</p>';
+              return ls.map((l,i)=>`
+                <a class="line-node" data-route="/lines/${l.id}">
+                  <span class="ln-idx">${i+1}</span>
+                  <span class="ln-name">${escapeHTML(l.name)}</span>
+                  <span class="ln-meta">${escapeHTML(l.from)}—${escapeHTML(l.to)} · ${escapeHTML(l.length)}km</span>
+                </a>${i<ls.length-1?'<span class="ln-arrow">›</span>':''}`
+              ).join('');
+            })()}
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>停站时刻</h3>
+          <div class="param-table">
+            ${(x.stops||[]).map((s,i)=>`
+              <div class="pk"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="stops.${i}.station">${escapeHTML(s.station)}</span></div><div class="pv"><span class="pv-editable" data-type="train" data-id="${x.id}" data-field="stops.${i}.time">${escapeHTML(s.time)}</span></div>
+            `).join('') || '<div class="pk">暂无时刻</div><div class="pv">-</div>'}
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>列车简介</h3>
+          <p class="desc-text"><span class="pv-editable" style="display:inline" data-type="train" data-id="${x.id}" data-field="desc">${escapeHTML(x.desc||'暂无简介')}</span></p>
+        </div>
+
+        <div class="detail-section">
+          <h3>演变时间线 <small class="sec-count">${(x.versions||[]).length} 个版本</small></h3>
+          ${renderVersions(x)}
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-card">
+          <h4>// Quick Facts</h4>
+          <div class="meta-row"><span class="k">档案编号</span><span class="v">${escapeHTML(x.no||'-')}</span></div>
+          <div class="meta-row"><span class="k">状态</span><span class="v">${statusLabel(x)}</span></div>
+          <div class="meta-row"><span class="k">生效日期</span><span class="v">${escapeHTML(x.validFrom||'-')}</span></div>
+          <div class="meta-row"><span class="k">失效日期</span><span class="v">${escapeHTML(x.validUntil||'—')}</span></div>
+          <div class="meta-row"><span class="k">调图版本</span><span class="v">${escapeHTML(x.adjustVersion||'-')}</span></div>
+          <div class="meta-row"><span class="k">归档日期</span><span class="v">${escapeHTML(x.createdAt||'-')}</span></div>
+        </div>
+        <div class="sidebar-card">
+          <h4>// 关联线路</h4>
+          ${linesOfTrain(x.id).map(l=>`
+            <div class="meta-row" style="cursor:pointer" data-route="/lines/${l.id}">
+              <span class="k">${escapeHTML(l.name)}</span><span class="v">${escapeHTML(l.length)} km</span>
+            </div>`).join('') || '<div class="meta-row"><span class="k">暂无关联线路</span><span class="v">-</span></div>'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 车次演变时间线 ---------- */
+function trainVersionList(x){
+  /* 优先用 versions[]；否则从旧字段构造单版本 */
+  if((x.versions||[]).length) return x.versions;
+  return [{ validFrom:x.validFrom||'', validUntil:x.validUntil||null, change:'', adjustVersion:x.adjustVersion||'' }];
+}
+function renderVersions(x){
+  const list=trainVersionList(x).slice().reverse(); // 最新在上
+  const active=(!x.validUntil || new Date(x.validUntil)>new Date());
+  const goMark = `<span class="mark m-go">现行</span>`;
+  const stopMark = `<span class="mark m-stop">已停</span>`;
+  const items = list.map((v,i)=>{
+    const isLast=(i===list.length-1);
+    const oldCls = isLast ? (active?'':'') : '';
+    // 判断该版本id对应当前车次：最后一个即当前
+    const cls = i===0 ? '' : 'old';
+    const mark = i===0 ? (active?goMark:stopMark) : '';
+    const badge = v.isStop ? stopMark : (v.isCurrent ? goMark : '');
+    const rel = v.adjustVersion ? `<span class="vrel">${escapeHTML(v.adjustVersion)}</span>` : '';
+    return `
+      <div class="ver-tli ${cls}">
+        <div class="vd">${escapeHTML(v.validFrom||'—')}${v.validUntil?' → '+escapeHTML(v.validUntil):''} ${rel}</div>
+        <div class="vt">${escapeHTML(v.change||(i===0?'当前生效版本':'历史版本'))} ${mark||badge}</div>
+        ${v.note?`<div class="vr">${escapeHTML(v.note)}</div>`:''}
+      </div>`;
+  }).join('');
+  return `
+    <div class="ver-tl">${items}</div>
+    <button class="ver-add" onclick="addVersion('${x.id}')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      新增版本
+    </button>`;
+}
+/* ---------- 模拟热评 ---------- */
+function mockCommentData(x){
+  const from=x.from||''; const to=x.to||''; const code=x.code||''; const dur=x.duration||'';
+  const model=x.model||''; const isTrain=model==='高铁'||model==='动车';
+  const rk=520+((code.charCodeAt(0)||0)%7)*113;
+  /* 按车型编排多条不同角度的评论，至少3条 */
+  return [
+    { author:'风笛手·老铁', date:'3 小时前',
+      text:`${from}→${to}这趟 ${code}，${dur?dur+'的全程':''}真是一镜到底。${isTrain?'350 一路狂奔不含糊，时刻表卡得准，值回票价':'车况平稳、还能躺着过夜，长途首选'}。${dur?dur+'全程':''}下来亲测很顺！`,
+      stats:`赞 ${rk} · 回复 ${8+(code.length*3)} · 收藏 ${96+(code.length*17)}` },
+    { author:'K1557 窗边客', date:'昨天 21:40',
+      text:`这车在 ${from} 发车 ${x.depart||'—'}，到 ${to} ${x.arrive||'—'}，${x.duration?x.duration+'下来':''}节奏很舒服。${isTrain?'车上 WiFi 满格、插座 USB 都有，办公党狂喜':'卧铺休息好，一觉到站，性价比绝了'}。`,
+      stats:`赞 ${Math.round(rk*0.62)} · 回复 ${4+(code.length*2)} · 收藏 ${52+(code.length*13)}` },
+    { author:'铁道岁月·退役司', date:'2 天前',
+      text:`做了这么多年铁路，${code} 这种 ${isTrain?'标杆车':'老线车'}看着最有感情。这条线从接入到提速都见证了，${(x.adjustVersion||'最近一次调图')} 之后误点变少了，调度确实是进步。`,
+      stats:`赞 ${Math.round(rk*0.45)} · 回复 ${10+(code.length*4)} · 收藏 ${31+(code.length*9)}` }
+  ];
+}
+function renderHotComment(x){
+  const list=mockCommentData(x);
+  return `
+  <div class="hot-comment-list">
+    <span class="hc-tag">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-4.5-8-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 11c0 5.5-8 10-8 10Z"/></svg>
+      热评
+    </span>
+    ${list.map(c=>`
+    <div class="hot-comment">
+      <div class="hc-text">${c.text}</div>
+      <div class="hc-meta">
+        <span><span class="hc-author">${c.author}</span>发帖</span>
+        <span>${c.stats}</span>
+        <span>${c.date}</span>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function addVersion(id){
+  const t=DB.trains.find(x=>x.id===id);
+  if(!t) return;
+  if(!t.versions) t.versions=trainVersionList(t);
+  const d=new Date().toISOString().slice(0,10);
+  t.versions.push({ validFrom:d, validUntil:null, change:'', adjustVersion:'' });
+  saveDB(); render();
+}
+function viewStationDetail(name){
+  const st = getStation(name);
+  if(!st) return notFound('车站');
+  const lines = st.lineIds.map(id=>DB.lines.find(l=>l.id===id)).filter(Boolean);
+  const trains = st.trainIds.map(id=>DB.trains.find(t=>t.id===id)).filter(Boolean);
+  return `
+  <div class="page">
+    <div class="breadcrumb">
+      <a data-route="/">首页</a><span class="sep">/</span>
+      <span>车站 · ${escapeHTML(st.name)}</span>
+    </div>
+
+    <div class="station-hero">
+      <div class="s-code">${escapeHTML(st.telecode||'——')}</div>
+      <h1>${escapeHTML(st.name)}</h1>
+      ${st.scope?upcomingScopeBadge(st):''}
+      <div style="display:flex;gap:20px;color:var(--ink-mute);font-size:14px">
+        <span><b style="color:var(--acc);font-family:'JetBrains Mono',monospace">${lines.length}</b> 条线路</span>
+        <span><b style="color:#e07355;font-family:'JetBrains Mono',monospace">${trains.length}</b> 次列车</span>
+      </div>
+      ${(st.telecode||st.city||st.pinyin)?`
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;padding-top:12px;border-top:1px dashed color-mix(in srgb,var(--ink-mute) 28%,transparent);color:var(--ink-mute);font-size:13px">
+        ${st.telecode?`<span>电报码 <b style="color:var(--ink);font-family:'JetBrains Mono',monospace">${escapeHTML(st.telecode)}</b></span>`:''}
+        ${st.city?`<span>城市 <b style="color:var(--ink)">${escapeHTML(st.city)}</b></span>`:''}
+        ${st.pinyin?`<span>拼音 <b style="color:var(--ink);font-family:'JetBrains Mono',monospace">${escapeHTML(st.pinyin)}</b></span>`:''}
+        ${st.seq?`<span>序号 <b style="color:var(--ink);font-family:'JetBrains Mono',monospace">${escapeHTML(st.seq)}</b></span>`:''}
+        ${st.country?`<span>国家/地区 <b style="color:var(--ink)">${escapeHTML(st.country)}</b></span>`:''}
+      </div>`:''}
+      ${st.note?`<p style="margin-top:10px;font-size:13px;color:var(--ink-dim)">${escapeHTML(st.note)}</p>`:''}
+    </div>
+
+    <div class="detail-section">
+      <h3>途经线路</h3>
+      ${lines.length ? `
+      <div class="line-chain">
+        ${lines.map((l,i)=>`
+          <a class="line-node" data-route="/lines/${l.id}">
+            <span class="ln-idx">${i+1}</span>
+            <span class="ln-name">${escapeHTML(l.name)}</span>
+            <span class="ln-meta">${escapeHTML(l.from)}—${escapeHTML(l.to)} · ${escapeHTML(l.length)}km</span>
+          </a>${i<lines.length-1?'<span class="ln-arrow">›</span>':''}`
+        ).join('')}
+      </div>` : '<p class="desc-text">暂无关联线路</p>'}
+    </div>
+
+    <div class="detail-section">
+      <h3>途经列车 <small style="color:var(--ink-dim);font-weight:400;font-family:'JetBrains Mono',monospace">${trains.length} 次</small></h3>
+      <div class="row-table">
+        <div class="row-thead" style="grid-template-columns:64px 1.3fr 1.5fr 0.6fr 0.7fr 0.7fr 1.5fr">
+          <span></span><span>车次</span><span>运行区间</span><span>状态</span><span>生效</span><span>失效</span><span>调图</span>
+        </div>
+        ${trains.map(t=>`
+          <div class="row-tr" data-route="/trains/${t.id}">
+            <span class="c-no">${escapeHTML(t.no||'')}</span>
+            <span class="c-name"><b>${escapeHTML(t.code)} 次</b><small>${escapeHTML(t.trainType||'')}</small></span>
+            <span class="c-fromto">${escapeHTML(t.from)} → ${escapeHTML(t.to)}</span>
+            <span><em class="${trainStatus(t)==='active'?'t-yes':'t-no'}">${statusLabel(t)}</em></span>
+            <span style="font-size:12px;color:var(--ink-mute);font-family:'JetBrains Mono',monospace">${escapeHTML(t.validFrom||'—')}</span>
+            <span style="font-size:12px;color:var(--ink-mute);font-family:'JetBrains Mono',monospace">${escapeHTML(t.validUntil||'—')}</span>
+            <span style="font-size:12px;color:var(--ink-mute);font-family:'JetBrains Mono',monospace">${escapeHTML(t.adjustVersion||'—')}</span>
+          </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--ink-dim)">暂无途经列车</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- 视图：投稿/编辑表单 ---------- */
+function viewForm(type,id){
+  const isEdit=!!id;
+  const hash=location.hash;
+  const tplMatch=hash.match(/tpl=(\d+|blank)/);
+  const tplKey=tplMatch?tplMatch[1]:'0';
+
+  // detect type from query if not given
+  if(!type){
+    const m=hash.match(/type=(line|train)/);
+    type=m?m[1]:'line';
+  }
+
+  let data={};
+  if(isEdit){
+    data = type==='line' ? (DB.lines.find(x=>x.id===id)||{}) : (DB.trains.find(x=>x.id===id)||{});
+  }else if(tplKey!=='blank'){
+    const tpls = type==='line'?LINE_TEMPLATES:TRAIN_TEMPLATES;
+    const idx=parseInt(tplKey,10)||0;
+    data = tpls[idx] || tpls[0];
+  }
+
+  // 模板切换条（仅新建模式显示）
+  const tplBar = isEdit ? '' : renderTplBar(type,tplKey);
+
+  if(type==='line'){
+    return `
+    <div class="page">
+      <div class="breadcrumb">
+        <a data-route="/">首页</a><span class="sep">/</span>
+        <a data-route="/lines">线路档案</a><span class="sep">/</span>
+        <span>${isEdit?'编辑':'投稿'}</span>
+      </div>
+      <h1 class="page-title">${isEdit?'编辑线路档案':'投稿新线路'}</h1>
+      <div class="page-sub">${isEdit?'Edit Railway Line':'New Line Contribution'}</div>
+
+      <div class="form-wrap">
+        ${tplBar}
+        <div class="form-card">
+          <form onsubmit="event.preventDefault();submitLineForm('${isEdit?id:''}')">
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>线路名称<span class="req">*</span></label>
+                <input name="name" required value="${escapeHTML(data.name||'')}" placeholder="如：青藏铁路">
+              </div>
+              <div class="form-row">
+                <label>英文名称</label>
+                <input name="latin" value="${escapeHTML(data.latin||'')}" placeholder="Qinghai-Tibet Railway">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>起点站<span class="req">*</span></label>
+                <input name="from" required value="${escapeHTML(data.from||'')}" placeholder="西宁">
+              </div>
+              <div class="form-row">
+                <label>终点站<span class="req">*</span></label>
+                <input name="to" required value="${escapeHTML(data.to||'')}" placeholder="拉萨">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>全长(公里)<span class="req">*</span></label>
+                <input name="length" type="number" step="0.1" required value="${escapeHTML(data.length||'')}" placeholder="1956">
+              </div>
+              <div class="form-row">
+                <label>建成通车</label>
+                <input name="opened" value="${escapeHTML(data.opened||'')}" placeholder="2006-07-01">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>电气化</label>
+                <select name="electrified">
+                  <option value="是" ${data.electrified==='是'?'selected':''}>是</option>
+                  <option value="否" ${data.electrified==='否'?'selected':''}>否</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>复线状态</label>
+                <input name="double" value="${escapeHTML(data.double||'')}" placeholder="是 / 否 / 部分复线">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>铁路等级</label>
+                <input name="grade" value="${escapeHTML(data.grade||'')}" placeholder="国铁Ⅰ级">
+              </div>
+              <div class="form-row">
+                <label>供电制式</label>
+                <input name="voltage" value="${escapeHTML(data.voltage||'')}" placeholder="25kV">
+              </div>
+            </div>
+            <div class="form-row">
+              <label>最高速度(km/h)</label>
+              <input name="maxSpeed" type="number" value="${escapeHTML(data.maxSpeed||'')}" placeholder="160">
+            </div>
+            <div class="form-row">
+              <label>沿线主要车站</label>
+              <input name="stations" value="${escapeHTML(data.stations||'')}" placeholder="西宁·格尔木·那曲·拉萨">
+              <div class="hint">多个车站用 · 分隔</div>
+            </div>
+            <div class="form-row">
+              <label>线路简介</label>
+              <textarea name="desc" placeholder="线路的基本情况、地理意义、技术特点等">${escapeHTML(data.desc||'')}</textarea>
+            </div>
+            <div class="form-row">
+              <label>历史时间线</label>
+              <textarea name="timeline" placeholder="每行一条，格式：日期 | 事件&#10;如：2006-07-01 | 青藏铁路全线通车">${escapeHTML((data.timeline||[]).map(t=>t.date+' | '+t.text).join('\n'))}</textarea>
+              <div class="hint">每行一条，日期与事件用 | 分隔</div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-ghost" data-route="${isEdit?'/lines/'+id:'/lines'}">取消</button>
+              <button type="submit" class="btn-brass">${isEdit?'保存修改':'提交归档'}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>`;
+  }else{
+    return `
+    <div class="page">
+      <div class="breadcrumb">
+        <a data-route="/">首页</a><span class="sep">/</span>
+        <a data-route="/trains">列车档案</a><span class="sep">/</span>
+        <span>${isEdit?'编辑':'投稿'}</span>
+      </div>
+      <h1 class="page-title">${isEdit?'编辑列车档案':'投稿新列车'}</h1>
+      <div class="page-sub">${isEdit?'Edit Train Service':'New Train Contribution'}</div>
+
+      <div class="form-wrap">
+        ${tplBar}
+        <div class="form-card">
+          <form onsubmit="event.preventDefault();submitTrainForm('${isEdit?id:''}')">
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>车次<span class="req">*</span></label>
+                <input name="code" required value="${escapeHTML(data.code||'')}" placeholder="G1">
+              </div>
+              <div class="form-row">
+                <label>车型<span class="req">*</span></label>
+                <select name="model" required>
+                  ${['高铁','动车','直达特快','特快','快速','普通'].map(m=>`<option value="${m}" ${data.model===m?'selected':''}>${m}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>起点站<span class="req">*</span></label>
+                <input name="from" required value="${escapeHTML(data.from||'')}" placeholder="北京南">
+              </div>
+              <div class="form-row">
+                <label>终点站<span class="req">*</span></label>
+                <input name="to" required value="${escapeHTML(data.to||'')}" placeholder="上海虹桥">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>发车时间</label>
+                <input name="depart" value="${escapeHTML(data.depart||'')}" placeholder="09:00">
+              </div>
+              <div class="form-row">
+                <label>到达时间</label>
+                <input name="arrive" value="${escapeHTML(data.arrive||'')}" placeholder="13:28">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>全程耗时</label>
+                <input name="duration" value="${escapeHTML(data.duration||'')}" placeholder="4h 28min">
+              </div>
+              <div class="form-row">
+                <label>最高速度(km/h)</label>
+                <input name="maxSpeed" type="number" value="${escapeHTML(data.maxSpeed||'')}" placeholder="350">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>车种</label>
+                <input name="trainType" value="${escapeHTML(data.trainType||'')}" placeholder="CR400AF 复兴号">
+              </div>
+              <div class="form-row">
+                <label>调图版本</label>
+                <input name="adjustVersion" value="${escapeHTML(data.adjustVersion||'')}" placeholder="2024Q1 调图">
+                <div class="hint">该车次所属的调图批次</div>
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>编组</label>
+                <input name="formation" value="${escapeHTML(data.formation||'')}" placeholder="8辆编组(4M4T)">
+              </div>
+              <div class="form-row">
+                <label>担当局</label>
+                <input name="operator" value="${escapeHTML(data.operator||'')}" placeholder="中国铁路上海局">
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-row">
+                <label>生效日期<span class="req">*</span></label>
+                <input name="validFrom" required value="${escapeHTML(data.validFrom||'')}" placeholder="2011-06-30">
+                <div class="hint">该车次开始执行的日期</div>
+              </div>
+              <div class="form-row">
+                <label>失效日期</label>
+                <input name="validUntil" value="${escapeHTML(data.validUntil||'')}" placeholder="留空表示现行">
+                <div class="hint">调图停运则填停运日期</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>运营线路 <small style="color:var(--ink-dim);font-weight:400;text-transform:none">多选，按运行顺序勾选</small></label>
+              <div class="line-picker">
+                ${(()=>{
+                  const selected = isEdit
+                    ? linesOfTrain(id).map(l=>l.id)
+                    : (data.lineIds||[]);
+                  return DB.lines.map(l=>`
+                    <label class="line-pick ${selected.includes(l.id)?'checked':''}">
+                      <input type="checkbox" name="lines" value="${l.id}" ${selected.includes(l.id)?'checked':''} onchange="toggleLinePick(this)">
+                      <span class="lp-name">${escapeHTML(l.name)}</span>
+                      <span class="lp-meta">${escapeHTML(l.from)}—${escapeHTML(l.to)}</span>
+                    </label>`).join('') || '<div class="hint">暂无可选线路，请先创建线路档案</div>';
+                })()}
+              </div>
+            </div>
+            <div class="form-row">
+              <label>停站时刻</label>
+              <textarea name="stops" placeholder="每行一条，格式：站名 | 时间&#10;如：南京南 | 12:30">${escapeHTML((data.stops||[]).map(s=>s.station+' | '+s.time).join('\n'))}</textarea>
+              <div class="hint">每行一条，站名与时间用 | 分隔</div>
+            </div>
+            <div class="form-row">
+              <label>列车简介</label>
+              <textarea name="desc" placeholder="车次的基本情况、运营特点、历史沿革等">${escapeHTML(data.desc||'')}</textarea>
+            </div>
+            <div class="form-row">
+              <label>版本演变 <small style="color:var(--ink-dim);font-weight:400;text-transform:none">每行一条，格式：生效日期 | 失效日期(可空) | 变化说明 | 调图版本(可空)</small></label>
+              <textarea name="versions" placeholder="每行一条：生效日期 | 失效日期 | 变化说明 | 调图版本&#10;如：2017-09-21 | | 提速至350常态化 | 2017Q3 调图">${escapeHTML(((isEdit?trainVersionList(data):[])||[]).map(v=>[v.validFrom||'',v.validUntil||'',v.change||'',v.adjustVersion||''].join(' | ')).join('\n'))}</textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-ghost" data-route="${isEdit?'/trains/'+id:'/trains'}">取消</button>
+              <button type="submit" class="btn-brass">${isEdit?'保存修改':'提交归档'}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+/* 模板切换条：让用户在示例基础上修改而非从零填写 */
+function renderTplBar(type,activeKey){
+  const labels = type==='line'
+    ? ['沪苏湖高铁','川藏铁路','哈大高铁']
+    : ['G99 沪昆标杆','Z21 京藏直达','Z164 沪藏直达'];
+  let html = '<div class="tpl-switcher"><span class="tpl-label">从示例开始修改：</span>';
+  labels.forEach((label,i)=>{
+    const k=String(i);
+    html += `<button type="button" class="tpl-chip ${activeKey===k?'active':''}" onclick="switchTpl('${type}',${i})">${label}</button>`;
+  });
+  html += `<button type="button" class="tpl-chip tpl-blank ${activeKey==='blank'?'active':''}" onclick="switchTpl('${type}','blank')">空白填写</button>`;
+  html += '</div>';
+  return html;
+}
+window.switchTpl=function(type,tpl){
+  go('/contribute?type='+type+'&tpl='+tpl);
+};
+/* 线路多选：切换选中态视觉 */
+window.toggleLinePick=function(input){
+  const label=input.closest('.line-pick');
+  if(label){label.classList.toggle('checked',input.checked);}
+};
+
+/* ---------- 表单提交 ---------- */
+window.submitLineForm=function(id){
+  const form=document.querySelector('form');
+  const fd=new FormData(form);
+  const obj={
+    name:fd.get('name').trim(),
+    latin:fd.get('latin').trim(),
+    from:fd.get('from').trim(),
+    to:fd.get('to').trim(),
+    length:parseInt(fd.get('length'),10)||0,
+    opened:fd.get('opened').trim(),
+    electrified:fd.get('electrified'),
+    double:fd.get('double').trim(),
+    grade:fd.get('grade').trim(),
+    voltage:fd.get('voltage').trim(),
+    maxSpeed:fd.get('maxSpeed').trim(),
+    stations:fd.get('stations').trim(),
+    desc:fd.get('desc').trim(),
+    timeline:fd.get('timeline').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+      const [d,...t]=l.split('|');return {date:d.trim(),text:t.join('|').trim()};
+    })
+  };
+  if(id){
+    const i=DB.lines.findIndex(x=>x.id===id);
+    if(i>=0){DB.lines[i]={...DB.lines[i],...obj};Store.save(DB);toast('档案已更新');go('/lines/'+id);}
+  }else{
+    obj.id=genId('L');
+    obj.no=genNo(DB.lines);
+    obj.createdAt=todayStr();
+    DB.lines.push(obj);Store.save(DB);
+    toast('档案已入库');
+    go('/lines/'+obj.id);
+  }
+};
+
+window.submitTrainForm=function(id){
+  const form=document.querySelector('form');
+  const fd=new FormData(form);
+  const lineIds=fd.getAll('lines'); // 按 DOM 顺序，即勾选顺序
+  const obj={
+    code:fd.get('code').trim(),
+    model:fd.get('model'),
+    from:fd.get('from').trim(),
+    to:fd.get('to').trim(),
+    depart:fd.get('depart').trim(),
+    arrive:fd.get('arrive').trim(),
+    duration:fd.get('duration').trim(),
+    maxSpeed:fd.get('maxSpeed').trim(),
+    trainType:fd.get('trainType').trim(),
+    adjustVersion:fd.get('adjustVersion').trim(),
+    formation:fd.get('formation').trim(),
+    operator:fd.get('operator').trim(),
+    validFrom:fd.get('validFrom').trim(),
+    validUntil:fd.get('validUntil').trim()||null,
+    stops:fd.get('stops').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+      const [s,...t]=l.split('|');return {station:s.trim(),time:t.join('|').trim()};
+    }),
+    versions:fd.get('versions').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p=l.split('|').map(x=>x.trim());
+      return { validFrom:p[0]||'', validUntil:p[1]||null, change:p[2]||'', adjustVersion:p[3]||'' };
+    }),
+    desc:fd.get('desc').trim()
+  };
+  const saveRelations=(trainId)=>{
+    DB.trainLines = DB.trainLines.filter(r=>r.trainId!==trainId);
+    lineIds.forEach((lid,i)=>DB.trainLines.push({trainId,lineId:lid,order:i+1}));
+  };
+  if(id){
+    const i=DB.trains.findIndex(x=>x.id===id);
+    if(i>=0){DB.trains[i]={...DB.trains[i],...obj};saveRelations(id);Store.save(DB);toast('档案已更新');go('/trains/'+id);}
+  }else{
+    obj.id=genId('T');
+    obj.no=genNo(DB.trains);
+    obj.createdAt=todayStr();
+    DB.trains.push(obj);saveRelations(obj.id);Store.save(DB);
+    toast('档案已入库');
+    go('/trains/'+obj.id);
+  }
+};
+
+/* ---------- 删除 ---------- */
+window.deleteEntry=function(type,id){
+  const x = type==='line' ? DB.lines.find(l=>l.id===id) : DB.trains.find(t=>t.id===id);
+  const name = type==='line' ? (x&&x.name) : (x&&x.code+' 次');
+  showModal('确认删除',`确定要删除「${name}」吗？此操作不可撤销。`,()=>{
+    if(type==='line'){
+      DB.lines=DB.lines.filter(l=>l.id!==id);
+      DB.trainLines=DB.trainLines.filter(r=>r.lineId!==id);
+    }else{
+      DB.trains=DB.trains.filter(t=>t.id!==id);
+      DB.trainLines=DB.trainLines.filter(r=>r.trainId!==id);
+    }
+    Store.save(DB);
+    toast('档案已删除');
+    go(type==='line'?'/lines':'/trains');
+  });
+};
+
+/* ---------- 全局搜索 ---------- */
+window.globalSearch=function(q){
+  q=(q||'').trim();
+  if(!q){go('/lines');return;}
+  // 如果搜索的车站名，直接跳转到车站页面
+  const st = getStation(q);
+  if(st){go('/stations/'+encodeURIComponent(q));return;}
+  window.__lineFilter.q=q;
+  window.__trainFilter.q=q;
+  // 智能跳转：先看列车车次特征
+  if(/^[GDCZTK]\d+$/i.test(q)){go('/trains');}
+  else{go('/lines');}
+};
+
+$('#navSearchBtn').addEventListener('click',()=>{
+  const q=prompt('输入搜索关键词：');
+  if(q!==null)globalSearch(q);
+});
+
+/* ---------- 404 ---------- */
+function notFound(type){
+  return `
+  <div class="page" style="text-align:center;padding-top:160px">
+    <div style="font-family:'Big Shoulders Display',sans-serif;font-size:120px;color:var(--acc);font-weight:900;line-height:1">404</div>
+    <h1 style="font-family:'Noto Serif SC',serif;font-size:28px;margin:20px 0 10px">未找到该${type}档案</h1>
+    <p style="color:var(--ink-mute);margin-bottom:30px">可能已被删除或链接错误</p>
+    <button class="btn-brass" data-route="/">返回首页</button>
+  </div>`;
+}
+
+/* ---------- 渲染入口 ---------- */
+function render(path){
+  const app=$('#app');
+  let html='';
+  // update nav active
+  $$('.nav-links a').forEach(a=>{
+    const r=a.dataset.route;
+    const key=r?r.replace(/^\//,''):'';
+    const isActive=(path===''&&key==='')||(path!==''&&key&&path===key)||(path!==''&&key&&path.startsWith(key+'/'));
+    a.classList.toggle('active', isActive);
+  });
+
+  if(path===''||path==='/'){html=viewHome();}
+  else if(path==='lines'){html=viewLines();}
+  else if(path==='trains'){html=viewTrains();}
+  else if(path==='stations'){html=viewStations();}
+  else if(path==='upcoming'){html=viewUpcoming();}
+  else if(path==='upcoming-lines'){html=viewUpcomingLines();}
+  else if(path==='contribute'){
+    const m=location.hash.match(/type=(line|train)/);
+    html=viewForm(m?m[1]:'line');
+  }
+  else if(path.startsWith('lines/')){html=viewLineDetail(path.split('/')[1]);}
+  else if(path.startsWith('trains/')){html=viewTrainDetail(path.split('/')[1]);}
+  else if(path.startsWith('stations/')){html=viewStationDetail(decodeURIComponent(path.split('/')[1]));}
+  else if(path.startsWith('edit/line/')){html=viewForm('line',path.split('/')[2]);}
+  else if(path.startsWith('edit/train/')){html=viewForm('train',path.split('/')[2]);}
+  else{html=notFound('页面');}
+
+  app.innerHTML=html;
+  // rebind data-route clicks inside app
+  $$('#app [data-route]').forEach(el=>{
+    el.addEventListener('click',e=>{e.preventDefault();go(el.dataset.route);});
+  });
+  // rebind data-goto hash-jump clicks (待开通线路→车站跳转)
+  $$('#app [data-goto]').forEach(el=>{
+    el.addEventListener('click',e=>{e.preventDefault();go(el.dataset.goto);});
+  });
+  // 待开通车站：定位到 focus 指定的站行
+  if(path==='upcoming'){
+    const m=location.hash.match(/focus=([^&]+)/);
+    if(m){
+      const nm=decodeURIComponent(m[1]);
+      const row=Array.from($$('#app .up-row')).find(r=>{
+        const t=r.querySelector('.up-name b'); return t && t.textContent===nm;
+      });
+      if(row) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'center'}),60);
+    }
+  }
+}
+
+/* ---------- 字段级就地编辑 ---------- */
+const FIELD_LABELS={
+  code:'车次',model:'车型',trainType:'车种',from:'起点',to:'终点',
+  depart:'发车时间',arrive:'到达时间',duration:'全程耗时',formation:'编组',
+  maxSpeed:'最高速度',operator:'担当局',desc:'简介',
+  length:'全长',opened:'建成通车',grade:'铁路等级',electrified:'电气化',
+  double:'复线状态',voltage:'供电制式',name:'名称',latin:'英文名',stations:'沿线车站'
+};
+function fieldLabel(f){
+  if(FIELD_LABELS[f]) return FIELD_LABELS[f];
+  // 路径形式：stops.0.station / timeline.0.date
+  const m=f.match(/^(stops|timeline)\.\d+\.(station|time|date|text)$/);
+  if(m) return m[1]==='stops' ? (m[2]==='station'?'停站':'时刻') : (m[2]==='date'?'日期':'事件');
+  return f;
+}
+function getPathVal(item,path){
+  const parts=path.split('.');
+  let v=item;
+  for(const p of parts){ if(v==null) return undefined; v=v[p]; }
+  return v;
+}
+function setPathVal(item,path,val){
+  const parts=path.split('.');
+  let v=item;
+  for(let i=0;i<parts.length-1;i++){ v=v[parts[i]]; }
+  v[parts[parts.length-1]]=val;
+}
+function makeEditable(el){
+  const type=el.dataset.type, id=el.dataset.id, field=el.dataset.field;
+  const coll = type==='train' ? DB.trains : DB.lines;
+  const item = coll.find(x=>x.id===id);
+  if(!item) return;
+  const current = getPathVal(item,field);
+  const curStr = current==null ? '' : String(current);
+  // 占位符「-」视为空
+  const isPlaceholder = curStr==='-';
+  const input=document.createElement('input');
+  input.className='pv-editing';
+  input.value = isPlaceholder ? '' : curStr;
+  input.dataset.type=type; input.dataset.id=id; input.dataset.field=field;
+  // 多行字段用 textarea
+  if(field==='desc' || /^timeline\.\d+\.text$/.test(field)){
+    const ta=document.createElement('textarea');
+    ta.className='pv-editing';
+    ta.value=isPlaceholder?'':curStr;
+    ta.rows=3;
+    ta.style.width='100%';
+    ta.style.minHeight='80px';
+    ta.style.resize='vertical';
+    ta.dataset.type=type; ta.dataset.id=id; ta.dataset.field=field;
+    el.replaceWith(ta);
+    ta.focus(); ta.select();
+    bindEditInput(ta,type,id,field,item,curStr);
+    return;
+  }
+  el.replaceWith(input);
+  input.focus(); input.select();
+  bindEditInput(input,type,id,field,item,curStr);
+}
+function bindEditInput(input,type,id,field,item,oldVal){
+  let done=false;
+  const finish=(cancel)=>{
+    if(done) return; done=true;
+    if(!cancel){
+      let v=input.value.trim();
+      // 数字字段转 number
+      if(['maxSpeed','length'].includes(field) && v!=='' && !isNaN(Number(v))){
+        v=Number(v);
+      }
+      const before=getPathVal(item,field);
+      // 空值落为空字符串（展示时再回退「-」）
+      setPathVal(item,field, v==='' ? '' : v);
+      saveDB();
+      toast(`${fieldLabel(field)} 已更新`);
+    }
+    // 重新渲染当前视图（保留 hash）
+    route(location.hash.slice(1)||'/');
+  };
+  input.addEventListener('blur',()=>finish(false));
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter' && input.tagName!=='TEXTAREA'){e.preventDefault();input.blur();}
+    else if(e.key==='Enter' && input.tagName==='TEXTAREA' && (e.ctrlKey||e.metaKey)){e.preventDefault();input.blur();}
+    else if(e.key==='Escape'){e.preventDefault();finish(true);}
+  });
+}
+// 事件委托：点击 .pv-editable 触发就地编辑
+document.addEventListener('click',e=>{
+  const el=e.target.closest('.pv-editable');
+  if(el){ e.preventDefault(); makeEditable(el); }
+});
+</script>
+</body>
+</html>
