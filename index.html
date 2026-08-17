@@ -633,9 +633,9 @@
   .up-corr{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--ink-dim);padding:10px 14px;border:1px dashed color-mix(in srgb,var(--ink-mute) 30%,transparent);border-radius:4px;margin-bottom:6px}
   .up-corr em{font-style:normal;font-weight:600;color:var(--acc-2)}
   .up-corr small{margin-right:6px;color:var(--ink-mute)}
-  .up-group{margin-bottom:26px}
-  .up-group-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .up-group-head small{color:var(--ink-dim);font-family:"JetBrains Mono",monospace;font-size:11px}
+  .up-group{margin-bottom:18px}
+  .up-group-head{display:flex;align-items:baseline;gap:8px;margin:12px 0 2px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+  .up-group-head small{color:var(--ink-dim);font-family:"JetBrains Mono",monospace;font-size:10.5px}
   .up-badge{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:1px;padding:4px 10px;border-radius:2px;border:1px solid var(--line);color:var(--ink-mute)}
   .up-badge.b-soon{background:rgba(224,115,85,.14);color:#e07355;border-color:rgba(224,115,85,.4)}
   .up-badge.b-in12{background:rgba(224,115,85,.08);color:#c98a72;border-color:rgba(224,115,85,.3)}
@@ -678,6 +678,28 @@
   .ul-where{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--ink-mute)}
   .ul-card-note{color:var(--ink-dim);font-size:12.5px;line-height:1.6}
   .ul-m2m{font-size:11px;color:var(--ink-dim);font-style:italic;font-family:"JetBrains Mono",monospace}
+  /* —— 待开通专题 · 紧凑档案式 —— */
+  .up-tally{font-size:12px;color:var(--ink-dim);margin:4px 0 2px;border-bottom:1px solid var(--line-2);padding-bottom:8px}
+  .up-tally b{color:var(--acc);font-family:"JetBrains Mono",monospace;font-weight:600}
+  .up-tally em{font-style:normal;color:#e07355}
+  .uc-row{padding:6px 0;border-bottom:1px solid var(--line-2);display:flex;flex-wrap:wrap;gap:2px 14px;align-items:baseline;line-height:1.5}
+  .uc-row:last-child{border-bottom:none}
+  .uc-row:hover{color:var(--acc)}
+  .uc-row .uc-name{font-family:"Noto Serif SC",serif;font-weight:700;font-size:14px}
+  .uc-row .uc-name small{font-weight:400;font-family:"JetBrains Mono",monospace;font-size:10px;color:var(--ink-dim);margin-left:6px}
+  .uc-row .uc-dim{color:var(--ink-dim);font-size:11px;font-family:"JetBrains Mono",monospace}
+  .uc-row .uc-line{color:var(--ink-mute);font-size:12.5px;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .uc-row .uc-tag{font-family:"JetBrains Mono",monospace;font-size:10px;padding:0 6px;border:1px solid var(--line);border-radius:2px;color:var(--ink-mute)}
+  .uc-row .uc-tag.t-0{color:#e07355;border-color:rgba(224,115,85,.5);background:rgba(224,115,85,.08)}
+  .uc-row .uc-tag.t-1{color:var(--acc);border-color:rgba(42,101,204,.35);background:rgba(42,101,204,.06)}
+  .uc-row .uc-tag.t-2{color:var(--ink-mute);border-color:var(--line)}
+  .uc-row .uc-open{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--acc);white-space:nowrap}
+  .uc-row .uc-note{width:100%;color:var(--ink-dim);font-size:11.5px}
+  .uc-chips{width:100%;display:flex;flex-wrap:wrap;gap:3px 6px;margin-top:3px}
+  .uc-chip{font-size:11.5px;color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:0 7px 1px;cursor:pointer;white-space:nowrap}
+  .uc-chip:hover{border-color:var(--acc);color:var(--acc)}
+  .uc-chip small{font-family:"JetBrains Mono",monospace;font-size:9.5px;color:var(--ink-dim)}
+  .uc-corridor{color:var(--ink-mute);font-size:11.5px}
 </style>
 </head>
 <body>
@@ -2063,30 +2085,21 @@ function viewUpcoming(){
     <h1 class="page-title">待开通车站</h1>
     <div class="page-sub">Upcoming Stations · ${count} 站 · 开通时间由工程预期推定，以官方发布为准</div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:14px;margin:18px 0">
-      <div class="up-kpi"><b class="uk-n">${count}</b><span>收录车站</span></div>
-      <div class="up-kpi"><b class="uk-n" style="color:#e07355">${soonCount}</b><span>${now} 年起陆续开通</span></div>
-      ${nextYear?`<div class="up-kpi up-kpi-wide"><span>下一个高确定性节点</span><b class="uk-line">${escapeHTML(nextYear.name)} · ${escapeHTML(nextYear.open||'')}</b></div>`:''}
-    </div>
+    <div class="up-tally">共 <b>${count}</b> 站 · <em>${soonCount}</em> 站 ${now} 年起陆续开通${nextYear?` · 下一确定性节点 <b>${escapeHTML(nextYear.name)}</b>（${escapeHTML(nextYear.open||'')}）`:''}</div>
 
     ${scopeSummary}
 
     ${groups.map(g=>`
       <div class="up-group">
         <div class="up-group-head"><span class="up-badge ${g.cls}">${g.label}</span><small>${g.items.length} 站</small></div>
-        <div class="up-list">
-          ${g.items.map(x=>`
-            <div class="up-row">
-              <div class="up-name">
-                <b>${escapeHTML(x.name)}</b>
-                ${x.scale?`<small class="up-scale">${escapeHTML(x.scale)}</small>`:''}
-              </div>
-              <div class="up-city">${escapeHTML(x.city)}</div>
-              <div class="up-line">${escapeHTML(x.line)}<small>${escapeHTML(x.ltype||'')} · ${escapeHTML(x.status||'')}</small></div>
-              <div class="up-open">${escapeHTML(x.open||'')}</div>
-              ${x.note?`<div class="up-note">${escapeHTML(x.note)}</div>`:''}
-            </div>`).join('')}
-        </div>
+        ${g.items.map(x=>`
+          <div class="uc-row" data-station="${encodeURIComponent(x.name)}">
+            <span class="uc-name">${escapeHTML(x.name)}${x.scale?`<small>${escapeHTML(x.scale)}</small>`:''}</span>
+            <span class="uc-dim">${escapeHTML(x.city)}</span>
+            <span class="uc-line">${escapeHTML(x.line)} · ${escapeHTML(x.ltype||'')} · ${escapeHTML(x.status||'')}</span>
+            <span class="uc-dim">${escapeHTML(x.open||'')}</span>
+            ${x.note?`<span class="uc-note">${escapeHTML(x.note)}</span>`:''}
+          </div>`).join('')}
       </div>`).join('')}
   </div>`;
 }
@@ -2094,11 +2107,11 @@ function viewUpcoming(){
 /* 待开通线路状态分档徽章：0 联调联试/铺轨（临近）1 在建 2 拟建/远期 */
 function upcomingLineStatusTag(status){
   const s=status||'';
-  let cls='ta-status-1', label=s;
-  if(/联调联试|铺轨|试运行|开通在即/.test(s)){cls='ta-status-0';}
-  else if(/在建|施工/.test(s)){cls='ta-status-1';}
-  else{cls='ta-status-2';}
-  return `<span class="ul-tag ${cls}">${escapeHTML(label)}</span>`;
+  let cls='t-1', label=s;
+  if(/联调联试|铺轨|试运行|开通在即/.test(s)){cls='t-0';}
+  else if(/在建|施工/.test(s)){cls='t-1';}
+  else{cls='t-2';}
+  return `<span class="uc-tag ${cls}">${escapeHTML(label)}</span>`;
 }
 function viewUpcomingLines(){
   const byYear={};
@@ -2110,19 +2123,14 @@ function viewUpcomingLines(){
   const years=Object.keys(byYear).sort();
   const total=UPCOMING_LINES.length;
   const stCount=new Set(UPCOMING_LINES.flatMap(l=>l.stations||[])).size;
+  const win2026_27=years.filter(y=>(+y)<=2027).reduce((s,y)=>s+byYear[y].length,0);
   return `
   <div class="page">
     <div class="breadcrumb"><a data-route="/">首页</a><span class="sep">/</span><span>线路 · 待开通专题</span></div>
     <h1 class="page-title">待开通线路</h1>
     <div class="page-sub">Upcoming Lines · ${total} 条线路 · 覆盖 ${stCount} 个在建车站 · 开通时间以官方发布为准</div>
 
-    <div style="display:flex;flex-wrap:wrap;gap:14px;margin:18px 0">
-      <div class="up-kpi"><b class="uk-n">${total}</b><span>在建/拟建线路</span></div>
-      <div class="up-kpi"><b class="uk-n" style="color:#e07355">${Object.keys(byYear).filter(y=>y<='2026').reduce((s,y)=>s+byYear[y].length,0)+Object.keys(byYear).filter(y=>y==='2027').reduce((s,y)=>s+byYear[y].length,0)}</b><span>2026–2027 关键通车窗口</span></div>
-      <div class="up-kpi up-kpi-wide"><span>多对多关系</span><b class="uk-line">线路 ↔ 车站 · 一站可属多线（如上海东站、宝山站、天府站）</b></div>
-    </div>
-
-    <p class="ul-m2m">说明：每条线路列出其途经的在建车站（与「待开通车站」专题双向关联）；同一车站会出现在其所属的每一条线路下。部分枢纽站（如宝山站、天府站南场）由多条待开通线路共用。</p>
+    <div class="up-tally">共 <b>${total}</b> 条线路 · 覆盖 <em>${stCount}</em> 个在建车站 · <b>${win2026_27}</b> 条在 2026–2027 通车窗口 · 线路↔车站多对多（一站可属多线）</div>
 
     ${years.map(y=>{
       const list=byYear[y].slice().sort((a,b)=>((a.open||'')+'999').localeCompare((b.open||'')+'999'));
@@ -2133,28 +2141,23 @@ function viewUpcomingLines(){
         ${list.map(l=>{
           const m2m = (l.stations||[]).some(s=>upcomingLinesOfStation(s).some(x=>x.name!==l.name));
           return `
-          <div class="up-line-card">
-            <div class="ul-top">
-              <span class="ul-name">${escapeHTML(l.name)}</span>
-              <span class="ul-sub">${escapeHTML(l.from||'')} → ${escapeHTML(l.to||'')} · 预计开通 ${escapeHTML(l.open||'')}</span>
-              ${upcomingLineStatusTag(l.status)}
-            </div>
-            <div class="ul-meta">
-              ${l.ltype?`<span class="ul-tag">${escapeHTML(l.ltype)}</span>`:''}
-              ${l.speed?`<span class="ul-tag ta-speed">${escapeHTML(l.speed)} km/h</span>`:''}
-              ${l.length?`<span class="ul-tag ta-len">${escapeHTML(l.length)} km</span>`:''}
-              ${l.corridor?`<span class="ul-tag">通道 · ${escapeHTML(l.corridor)}</span>`:''}
-              ${m2m?`<span class="ul-tag">↔ 共用枢纽站</span>`:''}
-            </div>
-            ${l.note?`<div class="ul-card-note">${escapeHTML(l.note)}</div>`:''}
-            <div class="ul-sta-wrap">
-              <span class="ul-where">途经在建车站</span>
+          <div class="uc-row">
+            <span class="uc-name">${escapeHTML(l.name)}<small>${escapeHTML(l.from||'')}→${escapeHTML(l.to||'')}</small></span>
+            <span class="uc-dim">${escapeHTML(l.open||'')}</span>
+            ${upcomingLineStatusTag(l.status)}
+            <span class="uc-tag">${escapeHTML(l.ltype||'')}</span>
+            ${l.speed?`<span class="uc-tag">${escapeHTML(l.speed)} km/h</span>`:''}
+            ${l.length?`<span class="uc-tag">${escapeHTML(l.length)} km</span>`:''}
+            ${l.corridor?`<span class="uc-corridor">${escapeHTML(l.corridor)}</span>`:''}
+            ${m2m?`<span class="uc-tag t-1">↔ 共用枢纽</span>`:''}
+            ${l.note?`<span class="uc-note">${escapeHTML(l.note)}</span>`:''}
+            <span class="uc-chips">
               ${(l.stations||[]).map(s=>`
-                <span class="ul-sta" data-goto="/upcoming?focus=${encodeURIComponent(s)}">
+                <span class="uc-chip" data-goto="/upcoming?focus=${encodeURIComponent(s)}">
                   ${escapeHTML(s)}
                   ${(()=>{const co=upcomingLinesOfStation(s).filter(x=>x.name!==l.name).length;return co?`<small>+${co}</small>`:'';})()}
-                </span>`).join('')||'<span class="ul-where">（暂无已收录在建站）</span>'}
-            </div>
+                </span>`).join('')||'<span class="uc-dim">（暂无已收录在建站）</span>'}
+            </span>
           </div>`;
         }).join('')}
       </div>`;
@@ -3173,8 +3176,8 @@ function render(path){
     const m=location.hash.match(/focus=([^&]+)/);
     if(m){
       const nm=decodeURIComponent(m[1]);
-      const row=Array.from($$('#app .up-row')).find(r=>{
-        const t=r.querySelector('.up-name b'); return t && t.textContent===nm;
+      const row=Array.from($$('#app .uc-row')).find(r=>{
+        const t=r.querySelector('.uc-name'); return t && t.childNodes[0] && t.childNodes[0].textContent.trim()===nm;
       });
       if(row) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'center'}),60);
     }
