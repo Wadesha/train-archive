@@ -3,3 +3,5 @@ prototype-adjustment.html
 prototype-edit-modes.html
 test_upcoming.js
 validate.js
+# 编辑器/沙箱临时目录
+.trae-html-share-packages/
