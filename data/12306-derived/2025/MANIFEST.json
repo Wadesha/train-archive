@@ -1,0 +1,19 @@
+{
+  "desc": "从 wj0575/RailRhythm12306 vtrain_data/no_list*.json(2025) 聚合的去重车次→train_no 对照表，按字头分片。train_no 为 12306 内部车次号(12位)。",
+  "source_repo": "https://github.com/wj0575/RailRhythm12306",
+  "dates": "2025-01-18 ~ 2025-07-06",
+  "files": 21,
+  "unique": 22258,
+  "note": "引用第三方仓库快照数据；缺失起止站(需以 train_list.js 2022 补)",
+  "files_map": {
+    "D": 4777,
+    "G": 7541,
+    "C": 4886,
+    "K": 2766,
+    "Z": 363,
+    "T": 278,
+    "S": 1054,
+    "Y": 248,
+    "NUM": 345
+  }
+}
