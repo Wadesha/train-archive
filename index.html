@@ -486,6 +486,7 @@
   .sidebar-card .meta-row:last-child{border-bottom:none}
   .sidebar-card .meta-row .k{color:var(--ink-dim)}
   .sidebar-card .meta-row .v{color:var(--ink);font-family:"JetBrains Mono",monospace;font-size:11px}
+  .sidebar-card .meta-row .v.src-tag{font-size:10px;color:var(--acc);border:1px solid rgba(42,101,204,.3);background:rgba(42,101,204,.06);padding:1px 6px;border-radius:2px;white-space:normal;line-height:1.4;margin-left:6px}
 
   /* ============ FORM ============ */
   .form-wrap{max-width:880px;margin:0 auto}
@@ -1863,9 +1864,10 @@ const Store = {
   load(){
     try{
       const raw = localStorage.getItem(STORE_KEY);
-      if(raw){ return JSON.parse(raw); }
+      if(raw){ const d=JSON.parse(raw); annotateSources(d.trains); return d; }
     }catch(e){}
     const seed = { lines: SEED_LINES, trains: SEED_TRAINS, trainLines: SEED_TRAIN_LINES };
+    annotateSources(seed.trains);
     localStorage.setItem(STORE_KEY, JSON.stringify(seed));
     return seed;
   },
@@ -1874,11 +1876,33 @@ const Store = {
   },
   reset(){
     const seed = { lines: SEED_LINES, trains: SEED_TRAINS, trainLines: SEED_TRAIN_LINES };
+    annotateSources(seed.trains);
     localStorage.setItem(STORE_KEY, JSON.stringify(seed));
     return seed;
   }
 };
 
+/* 车次核验来源标注（网络核对，来源见下；source 字段用于详情页展示） */
+const TRAIN_SOURCE_CHECKS={
+  'G1':'12306车次快照 train_list.js 2022-08',
+  'G7':'12306车次快照 train_list.js 2022-08',
+  'D901':'12306车次快照 train_list.js 2022-08',
+  'T109':'12306车次快照 train_list.js 2022-08',
+  'Z21':'12306车次快照 train_list.js 2022-08',
+  'T49':'12306车次快照 train_list.js 2022-08',
+  '5619':'12306车次快照 train_list.js 2022-08',
+  'K27':'12306车次快照 2022-08 · GLOBAL_SCOPE跨境走廊',
+  'Z5':'12306车次快照 2022-08 · GLOBAL_SCOPE跨境走廊',
+  'D717':'12306车次快照 2022-08(佐证Z9停运)',
+  'K3':'国际联运列车，不在12306普通车次表',
+  'Z9':'已停运；2022快照确实无本车次',
+  'Z97':'已停运；2022快照确实无本车次'
+};
+function annotateSources(trains){
+  if(!Array.isArray(trains)) return trains;
+  trains.forEach(t=>{ if(t&&t.code&&TRAIN_SOURCE_CHECKS[t.code]&&!t.source) t.source=TRAIN_SOURCE_CHECKS[t.code]; });
+  return trains;
+}
 let DB = Store.load();
 /* 兼容旧数据：没有 trainLines 字段时补空数组 */
 if(!DB.trainLines){ DB.trainLines = []; Store.save(DB); }
@@ -2613,6 +2637,7 @@ function viewTrainDetail(id){
           <div class="meta-row"><span class="k">生效日期</span><span class="v">${escapeHTML(x.validFrom||'-')}</span></div>
           <div class="meta-row"><span class="k">失效日期</span><span class="v">${escapeHTML(x.validUntil||'—')}</span></div>
           <div class="meta-row"><span class="k">调图版本</span><span class="v">${escapeHTML(x.adjustVersion||'-')}</span></div>
+          ${x.source?`<div class="meta-row"><span class="k">核验来源</span><span class="v src-tag">${escapeHTML(x.source)}</span></div>`:''}
           <div class="meta-row"><span class="k">归档日期</span><span class="v">${escapeHTML(x.createdAt||'-')}</span></div>
         </div>
         <div class="sidebar-card">

@@ -1,0 +1,19 @@
+{
+  "source": "https://kyfw.12306.cn/otn/resources/js/query/train_list.js",
+  "snapshot": "2022-08-19/2022-08-29",
+  "dates": 16,
+  "unique_total": 12996,
+  "files": {
+    "D": 2945,
+    "G": 4157,
+    "C": 2829,
+    "K": 1552,
+    "Z": 334,
+    "T": 227,
+    "S": 505,
+    "Y": 53,
+    "L": 4,
+    "NUM": 390
+  },
+  "note": "按车次字头分片，每行一条唯一 station_train_code(车次 起-止)。去重自全量日期快照。"
+}
